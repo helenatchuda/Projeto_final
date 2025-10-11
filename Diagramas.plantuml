@@ -1,0 +1,316 @@
+@startuml casos de uso
+left to right direction
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #f7f9fc
+  BorderColor #003366
+  FontColor #002244
+}
+skinparam rectangle {
+  BackgroundColor #eef3f9
+  BorderColor #003366
+}
+
+actor "Utilizador Normal" as User #2b7a78
+actor "Administrador" as Admin #3a506b
+
+rectangle "Sistema de Gestao de Financas Pessoais" {
+
+  ' --- Gestao de Utilizadores ---
+  rectangle "Gestao de Utilizadores" {
+    usecase "Registar-se" as UC1
+    usecase "Login" as UC2
+    usecase "Gerir Perfil" as UC3
+  }
+
+  ' --- Gestao de Receitas ---
+  rectangle "Gestao de Receitas" {
+    usecase "Gerir Receitas" as UC4
+    usecase "Adicionar Receita" as UC5
+    usecase "Editar Receita" as UC6
+    usecase "Eliminar Receita" as UC7
+  }
+
+  ' --- Gestao de Despesas ---
+  rectangle "Gestao de Despesas" {
+    usecase "Gerir Despesas" as UC8
+    usecase "Adicionar Despesa" as UC9
+    usecase "Editar Despesa" as UC10
+    usecase "Eliminar Despesa" as UC11
+  }
+
+  ' --- Gestao de Categorias ---
+  rectangle "Gestao de Categorias" {
+    usecase "Gerir Categorias" as UC12
+    usecase "Criar Categoria" as UC13
+    usecase "Editar Categoria" as UC14
+    usecase "Eliminar Categoria" as UC15
+  }
+
+  ' --- Relatorios ---
+  rectangle "Relatorios" {
+    usecase "Gerar Relatorios" as UC16
+    usecase "Calcular Totais" as UC17
+    usecase "Determinar Saldo Atual" as UC18
+    usecase "Listar por Categoria" as UC19
+  }
+
+  ' --- Persistencia e Excecoes ---
+  rectangle "Sistema e Dados" {
+    usecase "Guardar Dados" as UC20
+    usecase "Carregar Dados" as UC21
+    usecase "Tratar Excecoes" as UC22
+  }
+}
+
+' --- Ligacoes dos atores ---
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC8
+User --> UC12
+User --> UC16
+
+Admin --> UC2
+Admin --> UC12
+Admin --> UC16
+Admin --> UC20
+Admin --> UC21
+Admin --> UC22
+
+' --- Relacoes internas ---
+UC4 --> UC5 : <<include>>
+UC4 --> UC6 : <<include>>
+UC4 --> UC7 : <<include>>
+
+UC8 --> UC9 : <<include>>
+UC8 --> UC10 : <<include>>
+UC8 --> UC11 : <<include>>
+
+UC12 --> UC13 : <<include>>
+UC12 --> UC14 : <<include>>
+UC12 --> UC15 : <<include>>
+
+UC16 --> UC17 : <<include>>
+UC16 --> UC18 : <<include>>
+UC16 --> UC19 : <<include>>
+
+@enduml
+
+
+@startuml Diagrama de Classes
+
+skinparam class {
+  BackgroundColor #d9e1e2
+  BorderColor #333333
+  ArrowColor #333333
+}
+
+' -------------------------------------------------------------------
+' 1. Entidades Principais
+' -------------------------------------------------------------------
+
+class Utilizador {
+  - id: int
+  - nome: string
+  - email: string
+  - password: string
+  - telemovel: string
+  - perfil: string "Normal" ou "Administrador"
+  --
+  + gerirPerfil(): void
+  + login(email, password): boolean
+  + registar(): void
+}
+
+class Transacao {
+  - id: int
+  - valor: float
+  - data: Date
+  - descricao: string
+  --
+  + validarValor(): boolean
+}
+
+class Receita {
+}
+
+class Despesa {
+}
+
+class Categoria {
+  - id: int
+  - nome: string
+  --
+  + renomear(novoNome: string): void
+}
+
+' -------------------------------------------------------------------
+' 2. Classes Controlador (Gestores)
+' -------------------------------------------------------------------
+
+class GestorTransacoes {
+  + adicionarReceita(r: Receita): void
+  + editarReceita(r: Receita): void
+  + eliminarReceita(r: Receita): void
+  + adicionarDespesa(d: Despesa): void
+  + editarDespesa(d: Despesa): void
+  + eliminarDespesa(d: Despesa): void
+}
+
+class GeradorRelatorios {
+  + calcularTotais(u: Utilizador, periodo: Periodo): float
+  + determinarSaldoAtual(u: Utilizador): float
+  + listarPorCategoria(u: Utilizador, c: Categoria): List<Transacao>
+}
+
+class GestorCategorias {
+  + criarCategoria(nome: string): Categoria
+  + editarCategoria(c: Categoria, novoNome: string): void
+  + eliminarCategoria(c: Categoria): void
+}
+
+class PersistenciaDados {
+  + guardarDados(dados: SistemaData): boolean
+  + carregarDados(): SistemaData
+  + tratarExcecoes(e: Exception): void
+}
+
+' -------------------------------------------------------------------
+' 3. Classes Ator/Permissão
+' -------------------------------------------------------------------
+
+class Administrador {
+  + validarUsuario(u: Utilizador): void
+}
+
+
+' -------------------------------------------------------------------
+' 4. Relações (Associações, Herança, Dependência)
+' -------------------------------------------------------------------
+
+' Herança (Generalização/Especialização)
+Transacao <|-- Receita
+Transacao <|-- Despesa
+
+' Associação (Utilizador com Transações)
+Utilizador "1" -right-> "0..*" GestorTransacoes : possui
+
+' Associação (Transação com Categoria)
+Transacao "0..*" -left-> "1" Categoria : pertence a
+
+' Associação (Gestores com Entidades)
+GestorTransacoes "1" -> "0..*" Transacao : gerencia
+GestorCategorias "1" -> "0..*" Categoria : gerencia
+
+' Dependência (u = Utilizador, usa = usa)
+Utilizador ..> GestorTransacoes : usa
+Utilizador ..> GeradorRelatorios : usa
+Utilizador ..> GestorCategorias : usa
+
+GeradorRelatorios ..> Transacao : analisa
+GeradorRelatorios ..> Utilizador : usa
+
+Administrador ..> PersistenciaDados : usa
+Administrador ..> Utilizador : usa
+Administrador ..> GestorCategorias : usa
+Administrador ..> GestorTransacoes : usa
+
+' Persistência lida com os dados (dependência)
+PersistenciaDados ..> Utilizador : gere
+PersistenciaDados ..> Transacao : gere
+PersistenciaDados ..> Categoria : gere
+
+@enduml
+
+
+
+@startuml Gestão de Utilizadores
+
+
+actor "Utilizador" as U
+box "Gestão de Utilizadores" #LightBlue
+  participant "Interface/Login" as UI
+  ' A classe Utilizador é o objeto que gere o login
+  participant "Utilizador" as UTIL
+  participant "PersistenciaDados" as PD
+end box
+
+U -> UI: Inserir Credenciais (email, password)
+activate UI
+
+UI -> UTIL: login(email, password)
+activate UTIL
+
+  UTIL -> PD: carregarDados(email)
+  activate PD
+  PD --> UTIL: Objeto Utilizador (ou null)
+  deactivate PD
+
+  alt Utilizador encontrado e autenticado
+    UTIL -> UTIL: Definir estado 'logado'
+    UTIL --> UI: Resposta: Sucesso
+  else Utilizador não encontrado ou password errada
+    UTIL --> UI: Resposta: Falha
+  end
+
+deactivate UTIL
+
+alt Se Sucesso
+  UI --> U: Acesso concedido
+else
+  UI --> U: Exibir mensagem de erro
+end
+
+deactivate UI
+@enduml
+
+
+@startuml Gestão de Receita
+
+
+actor "Utilizador Normal" as U 
+
+box "Sistema de Gestão" #LightBlue
+  participant "Interface/Sistema" as UI
+  participant "GT:GestorTransacoes" as GT
+  participant "GC:GestorCategorias" as GC
+  participant "P:PersistenciaDados" as PD
+  participant "R:Receita" as RECEITA
+end box
+
+U -> UI: Clicar em "Nova Receita"
+activate UI
+
+' -- Verificação e Seleção de Categoria --
+UI -> GC: Solicita listarCategorias()
+activate GC
+GC --> UI: Retorna List<Categoria> (apenas Receita)
+deactivate GC
+
+UI -> U: Exibe formulário com dados e categorias
+U -> UI: Insere dados da Receita (valor, data, categoria_id, descricao)
+
+' -- Processamento e Persistência --
+UI -> GT: adicionarReceita(dados, Utilizador.id)
+activate GT
+
+  GT -> RECEITA: <<create>>
+  activate RECEITA
+  RECEITA -> RECEITA: validarValor()
+  RECEITA --> GT: R (Objeto Receita criado)
+  deactivate RECEITA
+
+  GT -> PD: guardarDados(R)
+  activate PD
+  PD --> GT: Sucesso/Retorno ID
+  deactivate PD
+
+GT --> UI: <font color=green>Receita Adicionada com sucesso</font>
+deactivate GT
+' 
+UI -> UI: Atualizar visão (lista de transações)
+UI --> U: Exibe confirmação
+deactivate UI
+@enduml
