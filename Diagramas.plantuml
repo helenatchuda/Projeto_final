@@ -314,3 +314,105 @@ UI -> UI: Atualizar visão (lista de transações)
 UI --> U: Exibe confirmação
 deactivate UI
 @enduml
+
+'Diagrama de sequencia Relatorios
+@startuml Gestao de Relatorios
+
+actor "Utilizador" as U 
+
+box "Sistema de Gestao" #LightBlue
+  participant "Interface/Sistema" as UI
+  participant "GR:GeradorRelatorios" as GR
+  participant "R:Receita" as R
+  participant "D:Despesa" as D
+end box
+
+U -> UI: Selecionar "Gerar Relatorio"
+activate UI
+
+UI -> GR: gerarRelatorio(Utilizador)
+activate GR
+
+' --- Calcular Totais ---
+GR -> R: obterTotalReceitas(Utilizador)
+activate R
+R --> GR: totalReceitas
+deactivate R
+
+GR -> D: obterTotalDespesas(Utilizador)
+activate D
+D --> GR: totalDespesas
+deactivate D
+
+' --- Calcular Saldo ---
+GR -> GR: saldo = totalReceitas - totalDespesas
+
+' --- Gerar Resumo ---
+GR --> UI: enviarResumo(totalReceitas, totalDespesas, saldo)
+deactivate GR
+
+UI --> U: Exibir Relatorio (Totais + Saldo)
+deactivate UI
+
+@enduml
+'Diagrama de sequencia Sistema e dados(percistencia)
+@startuml Sistema e Dados
+
+actor "Administrador" as A
+
+box "Sistema de Gestao" #LightBlue
+  participant "Interface/Sistema" as UI
+  participant "PD:PersistenciaDados" as PD
+  participant "U:Utilizador" as U
+  participant "R:Receita" as R
+  participant "D:Despesa" as D
+  participant "C:Categoria" as C
+end box
+
+' --- Guardar Dados ---
+A -> UI: Selecionar "Guardar Dados"
+activate UI
+
+UI -> PD: guardarDados(U, R, D, C)
+activate PD
+
+PD -> U: obterDadosUtilizador()
+U --> PD: dadosUtilizador
+
+PD -> R: obterReceitas()
+R --> PD: listaReceitas
+
+PD -> D: obterDespesas()
+D --> PD: listaDespesas
+
+PD -> C: obterCategorias()
+C --> PD: listaCategorias
+
+PD -> PD: escreverDadosEmFicheiro()
+PD --> UI: <font color=green>Confirmacao: Dados guardados com sucesso</font>
+deactivate PD
+deactivate UI
+
+' --- Carregar Dados ---
+A -> UI: Selecionar "Carregar Dados"
+activate UI
+
+UI -> PD: carregarDados()
+activate PD
+
+PD -> PD: lerFicheiroDados()
+PD --> UI: dados (utilizadores, receitas, despesas, categorias)
+deactivate PD
+
+UI --> A: Exibir mensagem "Dados carregados com sucesso"
+deactivate UI
+
+' --- Tratamento de Excecoes ---
+PD -> PD: verificarErros()
+alt erro encontrado
+  PD -> UI: notificarErro("Ficheiro corrompido ou inexistente")
+else sem erros
+  PD -> UI: continuarOperacao()
+end
+
+@enduml
