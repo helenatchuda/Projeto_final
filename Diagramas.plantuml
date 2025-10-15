@@ -99,16 +99,9 @@ UC16 --> UC19 : <<include>>
 @enduml
 
 
-@startuml Diagrama de Classes
-
-skinparam class {
-  BackgroundColor #d9e1e2
-  BorderColor #333333
-  ArrowColor #333333
-}
-
+@startuml
 ' -------------------------------------------------------------------
-' 1. Entidades Principais
+' 1. Definição de Classes
 ' -------------------------------------------------------------------
 
 class Utilizador {
@@ -124,52 +117,48 @@ class Utilizador {
   + registar(): void
 }
 
-class Transacao {
+class Receita {
   - id: int
   - valor: float
   - data: Date
   - descricao: string
-  --
-  + validarValor(): boolean
-}
-
-class Receita {
+   + adicionarReceita(r: Receita): void
+  + editarReceita(r: Receita): void
+  + eliminarReceita(r: Receita): void
 }
 
 class Despesa {
+  - id: int
+  - valor: float
+  - data: Date
+  - descricao: string
+   + adicionarDespesa(d: Despesa): void
+  + editarDespesa(d: Despesa): void
+  + eliminarDespesa(d: Despesa): void
 }
 
 class Categoria {
   - id: int
   - nome: string
-  --
+ + criarCategoria(nome: string): Categoria
+  + editarCategoria(c: Categoria, novoNome: string): void
+  + eliminarCategoria(c: Categoria): void
   + renomear(novoNome: string): void
 }
 
 ' -------------------------------------------------------------------
-' 2. Classes Controlador (Gestores)
+' 2. Classes de Gestão
 ' -------------------------------------------------------------------
 
-class GestorTransacoes {
-  + adicionarReceita(r: Receita): void
-  + editarReceita(r: Receita): void
-  + eliminarReceita(r: Receita): void
-  + adicionarDespesa(d: Despesa): void
-  + editarDespesa(d: Despesa): void
-  + eliminarDespesa(d: Despesa): void
-}
 
 class GeradorRelatorios {
   + calcularTotais(u: Utilizador, periodo: Periodo): float
   + determinarSaldoAtual(u: Utilizador): float
-  + listarPorCategoria(u: Utilizador, c: Categoria): List<Transacao>
+  ' Sem a classe Transacao, o retorno é um tipo mais genérico ou lista de um tipo específico (ex: Object)
+  + listarPorCategoria(u: Utilizador, c: Categoria): List<Object>
 }
 
-class GestorCategorias {
-  + criarCategoria(nome: string): Categoria
-  + editarCategoria(c: Categoria, novoNome: string): void
-  + eliminarCategoria(c: Categoria): void
-}
+
 
 class PersistenciaDados {
   + guardarDados(dados: SistemaData): boolean
@@ -177,49 +166,36 @@ class PersistenciaDados {
   + tratarExcecoes(e: Exception): void
 }
 
-' -------------------------------------------------------------------
-' 3. Classes Ator/Permissão
-' -------------------------------------------------------------------
-
 class Administrador {
   + validarUsuario(u: Utilizador): void
 }
 
 
-' -------------------------------------------------------------------
-' 4. Relações (Associações, Herança, Dependência)
-' -------------------------------------------------------------------
 
-' Herança (Generalização/Especialização)
-Transacao <|-- Receita
-Transacao <|-- Despesa
 
-' Associação (Utilizador com Transações)
-Utilizador "1" -right-> "0..*" GestorTransacoes : possui
 
-' Associação (Transação com Categoria)
-Transacao "0..*" -left-> "1" Categoria : pertence a
+' Associação (Receita e Despesa com Categoria)
+Receita "0..*" -left-> "1" Categoria : pertence a
+Despesa "0..*" -left-> "1" Categoria : pertence a
 
-' Associação (Gestores com Entidades)
-GestorTransacoes "1" -> "0..*" Transacao : gerencia
-GestorCategorias "1" -> "0..*" Categoria : gerencia
 
-' Dependência (u = Utilizador, usa = usa)
-Utilizador ..> GestorTransacoes : usa
+
 Utilizador ..> GeradorRelatorios : usa
-Utilizador ..> GestorCategorias : usa
 
-GeradorRelatorios ..> Transacao : analisa
+
+GeradorRelatorios ..> Receita : analisa
+GeradorRelatorios ..> Despesa : analisa
 GeradorRelatorios ..> Utilizador : usa
 
 Administrador ..> PersistenciaDados : usa
 Administrador ..> Utilizador : usa
-Administrador ..> GestorCategorias : usa
-Administrador ..> GestorTransacoes : usa
+
+
 
 ' Persistência lida com os dados (dependência)
 PersistenciaDados ..> Utilizador : gere
-PersistenciaDados ..> Transacao : gere
+PersistenciaDados ..> Receita : gere
+PersistenciaDados ..> Despesa : gere
 PersistenciaDados ..> Categoria : gere
 
 @enduml
@@ -232,7 +208,7 @@ PersistenciaDados ..> Categoria : gere
 actor "Utilizador" as U
 box "Gestão de Utilizadores" #LightBlue
   participant "Interface/Login" as UI
-  ' A classe Utilizador é o objeto que gere o login
+  
   participant "Utilizador" as UTIL
   participant "PersistenciaDados" as PD
 end box
@@ -266,51 +242,45 @@ end
 deactivate UI
 @enduml
 
-
 @startuml Gestão de Receita
 
-
-actor "Utilizador Normal" as U 
+actor "Utilizador Normal" as U
 
 box "Sistema de Gestão" #LightBlue
-  participant "Interface/Sistema" as UI
-  participant "GT:GestorTransacoes" as GT
-  participant "GC:GestorCategorias" as GC
-  participant "P:PersistenciaDados" as PD
-  participant "R:Receita" as RECEITA
+    participant "Interface / Sistema" as UI
+    participant "R: Receitas" as R_CLASS
+    participant "GC: Gestores de Categoria" as GC
+    participant "P: Persistência de Dados" as PD
 end box
 
-U -> UI: Clicar em "Nova Receita"
+U -> UI : Clicar em "Nova Receita"
 activate UI
 
-' -- Verificação e Seleção de Categoria --
-UI -> GC: Solicita listarCategorias()
+UI -> GC : listarCategoriasParaReceita()
 activate GC
-GC --> UI: Retorna List<Categoria> (apenas Receita)
+GC --> UI : Retorna List<Categoria> (apenas “Receita”)
 deactivate GC
 
-UI -> U: Exibe formulário com dados e categorias
-U -> UI: Insere dados da Receita (valor, data, categoria_id, descricao)
+UI -> U : Exibe formulário com dados + categorias
+U -> UI : Preenche (valor, data, categoria_id, descrição, utilizador_id)
 
-' -- Processamento e Persistência --
-UI -> GT: adicionarReceita(dados, Utilizador.id)
-activate GT
+UI -> R_CLASS : <<create>>
+activate R_CLASS
 
-  GT -> RECEITA: <<create>>
-  activate RECEITA
-  RECEITA -> RECEITA: validarValor()
-  RECEITA --> GT: R (Objeto Receita criado)
-  deactivate RECEITA
+R_CLASS -> R_CLASS : setDados(dados, utilizador_id)
+R_CLASS -> R_CLASS : validarValor()
+R_CLASS --> UI : rObj:Receita (objeto criado e validado)
+deactivate R_CLASS
 
-  GT -> PD: guardarDados(R)
-  activate PD
-  PD --> GT: Sucesso/Retorno ID
-  deactivate PD
+UI -> PD : guardarDados(rObj:Receita)
+activate PD
+PD -> PD : serializar(rObj)
+PD --> UI : Sucesso / Retorno ID
+deactivate PD
 
-GT --> UI: <font color=green>Receita Adicionada com sucesso</font>
-deactivate GT
-' 
-UI -> UI: Atualizar visão (lista de transações)
-UI --> U: Exibe confirmação
+UI -> UI : Atualizar visualização (lista de transações)
+UI --> U : <font color=green>Receita adicionada com sucesso</font>
+
 deactivate UI
+
 @enduml
