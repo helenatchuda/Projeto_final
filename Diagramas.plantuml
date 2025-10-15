@@ -315,6 +315,7 @@ UI --> U: Exibe confirmação
 deactivate UI
 @enduml
 
+'driagrama de sequencia gerar relatorios
 @startuml
 actor "Utilizador" as U 
 
