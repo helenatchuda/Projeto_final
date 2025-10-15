@@ -315,6 +315,80 @@ UI --> U: Exibe confirmação
 deactivate UI
 @enduml
 
+' -- Despesas --
+@startuml
+actor Utilizador
+actor Administrador
+participant Sistema
+participant Categoria
+participant Despesa
+
+== Utilizador escolhe categoria existente ==
+Utilizador -> Sistema : obterCategoriasDisponiveis()
+activate Sistema
+Sistema -> Categoria : listarCategorias()
+activate Categoria
+Categoria --> Sistema : lista de categorias
+deactivate Categoria
+Sistema --> Utilizador : mostrar lista de categorias
+deactivate Sistema
+
+Utilizador -> Sistema : selecionarCategoria(nome)
+
+== Criar despesa com categoria existente ==
+Utilizador -> Sistema : criarDespesa(valor, data, categoriaSelecionada)
+activate Sistema
+Sistema -> Despesa : salvarDespesa(valor, data, categoriaSelecionada)
+activate Despesa
+Despesa --> Sistema : despesa criada com sucesso
+deactivate Despesa
+Sistema --> Utilizador : confirmação de despesa criada
+deactivate Sistema
+
+== Alternativa: Utilizador insere nova categoria ==
+Utilizador -> Sistema : criarDespesa(valor, data, novaCategoria)
+activate Sistema
+Sistema -> Categoria : verificarCategoria(novaCategoria)
+activate Categoria
+Categoria --> Sistema : categoria não encontrada
+deactivate Categoria
+
+Sistema -> Administrador : notificar criação de nova categoria
+activate Administrador
+Administrador -> Sistema : criarCategoria(novaCategoria)
+Sistema -> Categoria : salvarCategoria(novaCategoria)
+activate Categoria
+Categoria --> Sistema : categoria criada
+deactivate Categoria
+deactivate Administrador
+
+Sistema -> Despesa : salvarDespesa(valor, data, novaCategoria)
+activate Despesa
+Despesa --> Sistema : despesa criada com sucesso
+deactivate Despesa
+Sistema --> Utilizador : confirmação de despesa criada
+deactivate Sistema
+@enduml
+
+@startuml
+actor Administrador
+
+participant Sistema
+participant Categoria
+
+== Administrador cria uma nova categoria ==
+
+Administrador -> Sistema : solicitarCriaçãoCategoria(nome)
+activate Sistema
+Sistema -> Categoria : salvarCategoria(nome)
+activate Categoria
+Categoria --> Sistema : categoria criada com sucesso
+deactivate Categoria
+Sistema --> Administrador : confirmação de criação
+deactivate Sistema
+@enduml
+
+
 'driagrama de sequencia gerar relatorios
 @startuml
 actor "Utilizador" as U 
