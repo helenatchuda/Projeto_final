@@ -315,9 +315,7 @@ UI --> U: Exibe confirmação
 deactivate UI
 @enduml
 
-'Diagrama de sequencia Relatorios
-@startuml Gestao de Relatorios
-
+@startuml
 actor "Utilizador" as U 
 
 box "Sistema de Gestao" #LightBlue
@@ -353,8 +351,8 @@ deactivate GR
 
 UI --> U: Exibir Relatorio (Totais + Saldo)
 deactivate UI
-
 @enduml
+
 'Diagrama de sequencia Sistema e dados(percistencia)
 @startuml Sistema e Dados
 
