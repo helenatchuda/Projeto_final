@@ -33,4 +33,10 @@ namespace gestaodefinanca
         public string Nome;
         public string Descricao;
     }
+    class Relatorio
+    {
+        public DateTime DataInicio;
+        public DateTime DataFim;
+        public Utilizador Utilizador;
+    }
 }
