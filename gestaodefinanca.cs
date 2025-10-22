@@ -39,4 +39,9 @@ namespace gestaodefinanca
         public DateTime DataFim;
         public Utilizador Utilizador;
     }
+    class aleatoria {
+        public nome;
+    }
 }
+
+
