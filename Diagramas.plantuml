@@ -1,0 +1,770 @@
+@startuml casos de uso 
+left to right direction
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #f7f9fc
+  BorderColor #003366
+  FontColor #002244
+}
+skinparam rectangle {
+  BackgroundColor #eef3f9
+  BorderColor #003366
+}
+
+actor "Utilizador Normal" as User #2b7a78
+actor "Administrador" as Admin #3a506b
+
+rectangle "Sistema de Gestao de Financas Pessoais" {
+
+  ' --- Gestao de Utilizadores ---
+  rectangle "Gestao de Utilizadores" {
+    usecase "Registar-se" as UC1
+    usecase "Login" as UC2
+    usecase "Gerir Perfil" as UC3
+  }
+
+  ' --- Gestao de Receitas ---
+  rectangle "Gestao de Receitas" {
+    usecase "Gerir Receitas" as UC4
+    usecase "Adicionar Receita" as UC5
+    usecase "Editar Receita" as UC6
+    usecase "Eliminar Receita" as UC7
+  }
+
+  ' --- Gestao de Despesas ---
+  rectangle "Gestao de Despesas" {
+    usecase "Gerir Despesas" as UC8
+    usecase "Adicionar Despesa" as UC9
+    usecase "Editar Despesa" as UC10
+    usecase "Eliminar Despesa" as UC11
+  }
+
+  ' --- Gestao de Categorias ---
+  rectangle "Gestao de Categorias" {
+    usecase "Gerir Categorias" as UC12
+    usecase "Criar Categoria" as UC13
+    usecase "Editar Categoria" as UC14
+    usecase "Eliminar Categoria" as UC15
+  }
+
+  ' --- Relatorios ---
+  rectangle "Relatorios" {
+    usecase "Gerar Relatorios" as UC16
+    usecase "Calcular Totais" as UC17
+    usecase "Determinar Saldo Atual" as UC18
+    usecase "Listar por Categoria" as UC19
+  }
+}
+
+' --- Ligacoes dos atores ---
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC8
+User --> UC12
+User --> UC16
+
+Admin --> UC2
+Admin --> UC12
+Admin --> UC16
+
+' --- Relacoes internas ---
+UC4 --> UC5 : <<include>>
+UC4 --> UC6 : <<include>>
+UC4 --> UC7 : <<include>>
+
+UC8 --> UC9 : <<include>>
+UC8 --> UC10 : <<include>>
+UC8 --> UC11 : <<include>>
+
+UC12 --> UC13 : <<include>>
+UC12 --> UC14 : <<include>>
+UC12 --> UC15 : <<include>>
+
+UC16 --> UC17 : <<include>>
+UC16 --> UC18 : <<include>>
+UC16 --> UC19 : <<include>>
+
+@enduml 
+@startuml
+' ===========================================================
+'           DIAGRAMA DE CLASSES - Sistema de Gestão Financeira
+' ===========================================================
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #f7f9fc
+skinparam classBackgroundColor #eef3f9
+skinparam classBorderColor #003366
+skinparam classFontColor #002244
+
+' ===========================================================
+'                     CLASSES PRINCIPAIS
+' ===========================================================
+
+class Utilizador {
+  - nome : String
+  - email : String
+  - password : String
+  - estadoLogado : boolean
+  
+  + setNome(nome : String)
+  + setEmail(email : String)
+  + setPassword(password : String)
+  + validar() : boolean
+  + verificarPassword(password : String) : boolean
+}
+
+class Receita {
+  - valor : double
+  - data : Date
+  - descricao : String
+  - categoria : Categoria
+  - utilizador : Utilizador
+  --
+  + setValor(valor : double)
+  + setData(data : Date)
+  + setDescricao(descricao : String)
+  + setCategoria(categoria : Categoria)
+  + setUtilizador(utilizador : Utilizador)
+  + validar() : boolean
+  + obterTotalReceitas(u : Utilizador) : double
+}
+
+class Despesa {
+  - valor : double
+  - data : Date
+  - descricao : String
+  - categoria : Categoria
+  - utilizador : Utilizador
+  --
+  + setValor(valor : double)
+  + setData(data : Date)
+  + setDescricao(descricao : String)
+  + setCategoria(categoria : Categoria)
+  + setUtilizador(utilizador : Utilizador)
+  + validar() : boolean
+  + obterTotalDespesas(u : Utilizador) : double
+}
+
+class Categoria {
+  - nome : String
+  - descricao : String
+  --
+  + setNome(nome : String)
+  + setDescricao(descricao : String)
+  + validar() : boolean
+}
+
+' ===========================================================
+'                  CONTROLADORES / GESTORES
+' ===========================================================
+
+class UtilizadorController {
+  + registarUtilizador(nome : String, email : String, password : String)
+  + login(email : String, password : String)
+  + definirEstadoLogado(u : Utilizador)
+}
+
+class ReceitaController {
+  + iniciarFormReceita()
+  + criarReceita(valor : double, data : Date, categoriaId : int, descricao : String, utilizadorId : int)
+}
+
+class DespesaController {
+  + iniciarFormDespesa()
+  + criarDespesa(valor : double, data : Date, categoriaId : int, descricao : String, utilizadorId : int)
+}
+
+class CategoriaController {
+  + iniciarFormCategoria()
+  + criarCategoria(nome : String, descricao : String)
+}
+
+class GeradorRelatorios {
+  + gerarRelatorio(u : Utilizador)
+  + obterTotais(u : Utilizador)
+  + calcularSaldo(totalReceitas : double, totalDespesas : double) : double
+}
+
+class GestaoCategoria {
+  + listarCategorias(tipo : String) : List<Categoria>
+}
+
+' ===========================================================
+'                    PERSISTÊNCIA DE DADOS
+' ===========================================================
+
+class PersistenciaDados {
+  + persistirUtilizador(u : Utilizador)
+  + carregarUtilizadorPorEmail(email : String) : Utilizador
+  + persistirReceita(r : Receita)
+  + persistirDespesa(d : Despesa)
+  + persistirCategoria(c : Categoria)
+  + serializar(objeto : Object)
+  + escreverNoArmazenamento()
+}
+
+' ===========================================================
+'                     RELAÇÕES ENTRE CLASSES
+' ===========================================================
+
+UtilizadorController --> Utilizador
+ReceitaController --> Receita
+DespesaController --> Despesa
+CategoriaController --> Categoria
+GeradorRelatorios --> Receita
+GeradorRelatorios --> Despesa
+
+Receita --> Categoria
+Receita --> Utilizador
+Despesa --> Categoria
+Despesa --> Utilizador
+
+UtilizadorController --> PersistenciaDados
+ReceitaController --> PersistenciaDados
+DespesaController --> PersistenciaDados
+CategoriaController --> PersistenciaDados
+
+GestaoCategoria --> Categoria
+ReceitaController --> GestaoCategoria
+DespesaController --> GestaoCategoria
+
+@enduml
+
+@startuml
+' ===========================================================
+'       DIAGRAMA DE CLASSES - Sistema de Gestao Financeira
+' ===========================================================
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #f7f9fc
+skinparam classBackgroundColor #eef3f9
+skinparam classBorderColor #003366
+skinparam classFontColor #002244
+
+' ===========================================================
+'                   CLASSES PRINCIPAIS
+' ===========================================================
+
+class Utilizador {
+  - nome : String
+  - email : String
+  - password : String
+  - estadoLogado : boolean
+  --
+  + setNome(nome : String) : void
+  + setEmail(email : String) : void
+  + setPassword(password : String) : void
+  + validar() : boolean
+  + verificarPassword(password : String) : boolean
+}
+
+class Receita {
+  - valor : double
+  - data : Date
+  - descricao : String
+  - categoria : Categoria
+  - utilizador : Utilizador
+  --
+  + setValor(valor : double) : void
+  + setData(data : Date) : void
+  + setDescricao(descricao : String) : void
+  + setCategoria(categoria : Categoria) : void
+  + setUtilizador(utilizador : Utilizador) : void
+  + validar() : boolean
+  + obterTotalReceitas(u : Utilizador) : double
+}
+
+class Despesa {
+  - valor : double
+  - data : Date
+  - descricao : String
+  - categoria : Categoria
+  - utilizador : Utilizador
+  --
+  + setValor(valor : double) : void
+  + setData(data : Date) : void
+  + setDescricao(descricao : String) : void
+  + setCategoria(categoria : Categoria) : void
+  + setUtilizador(utilizador : Utilizador) : void
+  + validar() : boolean
+  + obterTotalDespesas(u : Utilizador) : double
+}
+
+class Categoria {
+  - nome : String
+  - descricao : String
+  --
+  + setNome(nome : String) : void
+  + setDescricao(descricao : String) : void
+  + validar() : boolean
+}
+
+' ===========================================================
+'               CONTROLADORES E GESTORES
+' ===========================================================
+
+class UtilizadorController {
+  + registarUtilizador(nome : String, email : String, password : String) : void
+  + login(email : String, password : String) : boolean
+  + definirEstadoLogado(u : Utilizador) : void
+}
+
+class ReceitaController {
+  + iniciarFormReceita() : void
+  + criarReceita(valor : double, data : Date, categoriaId : int, descricao : String, utilizadorId : int) : void
+}
+
+class DespesaController {
+  + iniciarFormDespesa() : void
+  + criarDespesa(valor : double, data : Date, categoriaId : int, descricao : String, utilizadorId : int) : void
+}
+
+class CategoriaController {
+  + iniciarFormCategoria() : void
+  + criarCategoria(nome : String, descricao : String) : void
+}
+
+class GestaoCategoria {
+  + listarCategorias(tipo : String) : List<Categoria>
+}
+
+class GeradorRelatorios {
+  + gerarRelatorio(u : Utilizador) : void
+  + obterTotais(u : Utilizador) : Map<String, Double>
+  + calcularSaldo(totalReceitas : double, totalDespesas : double) : double
+}
+
+' ===========================================================
+'                   PERSISTENCIA DE DADOS
+' ===========================================================
+
+class PersistenciaDados {
+  + persistirUtilizador(u : Utilizador) : void
+  + carregarUtilizadorPorEmail(email : String) : Utilizador
+  + persistirReceita(r : Receita) : void
+  + persistirDespesa(d : Despesa) : void
+  + persistirCategoria(c : Categoria) : void
+  + serializar(objeto : Object) : String
+  + escreverNoArmazenamento() : void
+}
+
+' ===========================================================
+'                     RELACOES ENTRE CLASSES
+' ===========================================================
+
+' ---- Herancas e dependencias ----
+UtilizadorController --> Utilizador
+ReceitaController --> Receita
+DespesaController --> Despesa
+CategoriaController --> Categoria
+GeradorRelatorios --> Receita
+GeradorRelatorios --> Despesa
+
+' ---- Dependencias de persistencia ----
+UtilizadorController --> PersistenciaDados
+ReceitaController --> PersistenciaDados
+DespesaController --> PersistenciaDados
+CategoriaController --> PersistenciaDados
+
+' ---- Gestao de Categorias ----
+GestaoCategoria --> Categoria
+ReceitaController --> GestaoCategoria
+DespesaController --> GestaoCategoria
+
+' ---- Associacoes ----
+Utilizador "1" --> "0..*" Receita : possui >
+Utilizador "1" --> "0..*" Despesa : possui >
+Receita "1" --> "1" Categoria : classifica >
+Despesa "1" --> "1" Categoria : classifica >
+@enduml
+
+
+@startuml Gestão de Utilizador 
+
+actor "Utilizador" as U
+
+box "Gestão de Utilizadores" #LightBlue
+  participant "Interface/Sistema" as UI
+  participant "UtilizadorController" as UC
+  participant "Utilizador" as U_CLASS
+  participant "PersistenciaDados" as PD
+end box
+
+' =======================================================
+' 1. CENÁRIO: REGISTO DE NOVO UTILIZADOR
+' =======================================================
+
+group Registo de Novo Utilizador
+U -> UI: clicarRegisto()
+activate UI
+
+UI -> UC: iniciarFormRegisto()
+activate UC
+UC --> UI: mostrarFormRegisto()
+deactivate UC
+
+U -> UI: submeterForm(nome, email, password)
+activate UI
+
+UI -> UC: registarUtilizador(nome, email, password)
+activate UC
+
+UC -> U_CLASS : <<create>> criarInstancia()
+activate U_CLASS
+
+U_CLASS -> U_CLASS : setNome(nome)
+U_CLASS -> U_CLASS : setEmail(email)
+U_CLASS -> U_CLASS : setPassword(password) ' Hash da password seria feito aqui ou no Controller
+
+U_CLASS -> U_CLASS : validar()
+alt dados válidos
+  U_CLASS --> UC : objetoUtilizador
+else
+  U_CLASS --> UC : lançar ValidacaoException(mensagem)
+end
+deactivate U_CLASS
+
+alt se válido (Validação da Entidade)
+  UC -> PD : persistirUtilizador(objetoUtilizador)
+  activate PD
+
+  PD -> PD : serializar(objetoUtilizador)
+  PD -> PD : escreverNoArmazenamento()
+
+  alt sucesso persistência
+    PD --> UC : confirmaçãoPersistencia
+  else erro na persistência
+    PD --> UC : lançar PersistenciaException(mensagem)
+  end
+
+  deactivate PD
+
+  alt persistência bem-sucedida
+    UC --> UI : sucesso("Utilizador registado")
+  else
+    UC --> UI : erro("Falha ao guardar utilizador")
+  end
+else validação falhou
+  UC --> UI : erro("Dados inválidos: …")
+end
+
+deactivate UC
+
+UI --> U : mostrarMensagem(sucesso ou erro)
+deactivate UI
+end
+
+' =======================================================
+' 2. CENÁRIO: LOGIN DE UTILIZADOR (Adaptação do seu original)
+' =======================================================
+
+group Login de Utilizador
+U -> UI: inserirCredenciais(email, password)
+activate UI
+
+UI -> UC: login(email, password)
+activate UC
+
+UC -> PD: carregarUtilizadorPorEmail(email)
+activate PD
+PD --> UC: objetoUtilizador ou null
+deactivate PD
+
+alt usuário encontrado
+  UC -> U_CLASS: verificarPassword(objetoUtilizador, password)
+  activate U_CLASS
+  deactivate U_CLASS
+  
+  alt password correta
+    UC -> UC: definirEstadoLogado(objetoUtilizador)
+    UC -> PD: atualizarEstadoUsuario(objetoUtilizador)
+    activate PD
+    PD --> UC: confirmaçãoPersistencia
+    deactivate PD
+
+    UC --> UI: respostaSucesso("Autenticado com sucesso")
+  else senha incorreta
+    UC --> UI: respostaFalha("Senha incorreta")
+  end
+else usuário não existe
+  UC --> UI: respostaFalha("Usuário não encontrado")
+end
+
+deactivate UC
+
+UI --> U: exibirMensagem( sucesso ou erro )
+deactivate UI
+end
+
+@enduml
+
+
+@startuml Gestão de Receita
+
+actor "Utilizador Normal" as U
+
+box "Sistema de Gestão" #LightBlue
+    participant "Interface / Sistema" as UI
+    participant "ReceitaController" as RC
+    participant "Receita" as R_CLASS
+    participant "Gestão de Categoria" as GC
+    participant "Persistência de Dados" as PD
+end box
+
+U -> UI : clicarNovaReceita()
+activate UI
+
+UI -> RC : iniciarFormReceita()
+activate RC
+
+RC -> GC : listarCategorias("Receita")
+activate GC
+GC --> RC : listaCategorias
+deactivate GC
+
+RC --> UI : mostrarFormReceita(listaCategorias)
+deactivate RC
+
+U -> UI : submeterForm(valor, data, categoriaId, descricao, utilizadorId)
+activate UI
+
+UI -> RC : criarReceita(valor, data, categoriaId, descricao, utilizadorId)
+activate RC
+
+RC -> R_CLASS : <<create>> criarInstancia()
+activate R_CLASS
+
+R_CLASS -> R_CLASS : setValor(valor)
+R_CLASS -> R_CLASS : setData(data)
+R_CLASS -> R_CLASS : setCategoria(categoriaId)
+R_CLASS -> R_CLASS : setDescricao(descricao)
+R_CLASS -> R_CLASS : setUtilizador(utilizadorId)
+
+R_CLASS -> R_CLASS : validar()
+alt dados válidos
+    R_CLASS --> RC : objetoReceita
+else
+    R_CLASS --> RC : lançar ValidacaoException(mensagem)
+end
+deactivate R_CLASS
+
+alt se válido
+    RC -> PD : persistirReceita(objetoReceita)
+    activate PD
+
+    PD -> PD : serializar(objetoReceita)
+    PD -> PD : escreverNoArmazenamento()
+
+    alt sucesso persistência
+        PD --> RC : confirmaçãoPersistencia
+    else erro na persistência
+        PD --> RC : lançar PersistenciaException(mensagem)
+    end
+
+    deactivate PD
+
+    alt persistência bem-sucedida
+        RC --> UI : sucesso("Receita adicionada")
+    else
+        RC --> UI : erro("Falha ao guardar receita")
+    end
+else validação falhou
+    RC --> UI : erro("Dados inválidos: …")
+end
+
+deactivate RC
+
+UI --> U : mostrarMensagem(sucesso ou erro)
+
+deactivate UI
+
+@enduml
+@startuml Gestao de relatorios
+actor "Utilizador" as U 
+
+box "Sistema de Gestao" #LightBlue
+  participant "Interface/Sistema" as UI
+  participant "GR:GeradorRelatorios" as GR
+  participant "R:Receita" as R
+  participant "D:Despesa" as D
+end box
+
+U -> UI: Selecionar "Gerar Relatorio"
+activate UI
+
+UI -> GR: gerarRelatorio(Utilizador)
+activate GR
+
+' --- Calcular Totais ---
+GR -> R: obterTotalReceitas(Utilizador)
+activate R
+R --> GR: totalReceitas
+deactivate R
+
+GR -> D: obterTotalDespesas(Utilizador)
+activate D
+D --> GR: totalDespesas
+deactivate D
+
+' --- Calcular Saldo ---
+GR -> GR: saldo = totalReceitas - totalDespesas
+
+' --- Gerar Resumo ---
+GR --> UI: enviarResumo(totalReceitas, totalDespesas, saldo)
+deactivate GR
+
+UI --> U: Exibir Relatorio (Totais + Saldo)
+deactivate UI
+@enduml
+
+
+@startuml Gestão de Despesa
+actor "Utilizador Normal" as U
+
+box "Sistema de Gestão" #LightBlue
+    participant "Interface / Sistema" as UI
+    participant "DespesaController" as DC
+    participant "Despesa" as D_CLASS
+    participant "Gestão de Categoria" as GC
+    participant "Persistência de Dados" as PD
+end box
+
+U -> UI : clicarNovaDespesa()
+activate UI
+
+UI -> DC : iniciarFormDespesa()
+activate DC
+
+DC -> GC : listarCategorias("Despesa")
+activate GC
+GC --> DC : listaCategorias
+deactivate GC
+
+DC --> UI : mostrarFormDespesa(listaCategorias)
+deactivate DC
+
+U -> UI : submeterForm(valor, data, categoriaId, descricao, utilizadorId)
+activate UI
+
+UI -> DC : criarDespesa(valor, data, categoriaId, descricao, utilizadorId)
+activate DC
+
+DC -> D_CLASS : <<create>> criarInstancia()
+activate D_CLASS
+
+D_CLASS -> D_CLASS : setValor(valor)
+D_CLASS -> D_CLASS : setData(data)
+D_CLASS -> D_CLASS : setCategoria(categoriaId)
+D_CLASS -> D_CLASS : setDescricao(descricao)
+D_CLASS -> D_CLASS : setUtilizador(utilizadorId)
+
+D_CLASS -> D_CLASS : validar()
+alt dados válidos
+    D_CLASS --> DC : objetoDespesa
+else
+    D_CLASS --> DC : lançar ValidacaoException(mensagem)
+end
+deactivate D_CLASS
+
+alt se válido
+    DC -> PD : persistirDespesa(objetoDespesa)
+    activate PD
+
+    PD -> PD : serializar(objetoDespesa)
+    PD -> PD : escreverNoArmazenamento()
+
+    alt sucesso persistência
+        PD --> DC : confirmaçãoPersistencia
+    else erro na persistência
+        PD --> DC : lançar PersistenciaException(mensagem)
+    end
+
+    deactivate PD
+
+    alt persistência bem-sucedida
+        DC --> UI : sucesso("Despesa adicionada")
+    else
+        DC --> UI : erro("Falha ao guardar despesa")
+    end
+else validação falhou
+    DC --> UI : erro("Dados inválidos: …")
+end
+
+deactivate DC
+
+UI --> U : mostrarMensagem(sucesso ou erro)
+
+deactivate UI
+@enduml
+@startuml 
+!theme minty
+actor "Administrador" as Admin
+
+box "Sistema de Gestão" #LightBlue
+    participant "Interface / Sistema" as UI
+    participant "CategoriaController" as CC
+    participant "Categoria" as C_CLASS
+    participant "Persistência de Dados" as PD
+end box
+
+Admin -> UI : clicarNovaCategoria()
+activate UI
+
+UI -> CC : iniciarFormCategoria()
+activate CC
+
+CC --> UI : mostrarFormCategoria()
+deactivate CC
+
+Admin -> UI : submeterForm(nomeCategoria, descricao)
+activate UI
+
+UI -> CC : criarCategoria(nomeCategoria, descricao)
+activate CC
+
+CC -> C_CLASS : <<create>> criarInstancia()
+activate C_CLASS
+
+C_CLASS -> C_CLASS : setNome(nomeCategoria)
+C_CLASS -> C_CLASS : setDescricao(descricao)
+
+C_CLASS -> C_CLASS : validar()
+alt dados válidos
+    C_CLASS --> CC : objetoCategoria
+else
+    C_CLASS --> CC : lançar ValidacaoException(mensagem)
+end
+deactivate C_CLASS
+
+alt se válido
+    CC -> PD : persistirCategoria(objetoCategoria)
+    activate PD
+
+    PD -> PD : serializar(objetoCategoria)
+    PD -> PD : escreverNoArmazenamento()
+
+    alt sucesso persistência
+        PD --> CC : confirmaçãoPersistencia
+    else erro na persistência
+        PD --> CC : lançar PersistenciaException(mensagem)
+    end
+
+    deactivate PD
+
+    alt persistência bem-sucedida
+        CC --> UI : sucesso("Categoria adicionada")
+    else
+        CC --> UI : erro("Falha ao guardar categoria")
+    end
+else validação falhou
+    CC --> UI : erro("Dados inválidos: …")
+end
+
+deactivate CC
+
+UI --> Admin : mostrarMensagem(sucesso ou erro)
+
+deactivate UI
+@enduml
