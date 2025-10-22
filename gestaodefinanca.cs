@@ -27,4 +27,29 @@ namespace gestaodefinanca
         public Categoria Categoria;
         public Utilizador Utilizador;
     }
+    class Categoria
+    {
+        private int id;
+        public string Nome;
+        public string Descricao;
+    }
+    public class GeradorRelatorios
+    {
+        public decimal CalcularTotalReceitas(List<Receita> receitas)
+        {
+            return receitas?.Sum(r => r.Valor) ?? 0;
+        }
+
+        public decimal CalcularTotalDespesas(List<Despesa> despesas)
+        {
+            return despesas?.Sum(d => d.Valor) ?? 0;
+        }
+
+        public decimal CalcularSaldo(decimal totalReceitas, decimal totalDespesas)
+        {
+            return totalReceitas - totalDespesas;
+        }
+
+        public void ExibirResumo;
+    }
 }
