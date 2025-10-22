@@ -33,14 +33,4 @@ namespace gestaodefinanca
         public string Nome;
         public string Descricao;
     }
-    public class GeradorRelatorios
-    {
-        public decimal CalcularTotalReceitas;
-
-        public decimal CalcularTotalDespesas;
-
-        public decimal CalcularSaldo;
-
-        public void ExibirResumo;
-    }
 }
