@@ -16,9 +16,10 @@ namespace SistemaGestaoFinanceira
             Console.WriteLine("=== CRIAR NOVA CATEGORIA ===");
         }
 
+        //metodo criar categoria
         public void CriarCategoria(string nome, string descricao)
         {
-            Categoria categoria = new Categoria();
+            Categoria categoria = new Categoria(); 
             categoria.Nome = nome;
             categoria.Descricao = descricao;
 
