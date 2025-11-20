@@ -1,0 +1,13 @@
+[
+  {
+    "Id": "1b0c950d-d4a9-4d64-9b2f-7d1234567890",
+    "Nome": "Marcos Boa Morte",
+    "Email": "marcos@example.com",
+    "_passwordHash": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "_passwordSalt": "YYYYYYYYYYYYYYYYYYYYYY",
+    "DataCriacao": "2025-11-12T10:00:00Z",
+    "EstadoLogado": false,
+    "Activo": true,
+    "DataUltimoLogin": "2025-11-12T10:05:00Z"
+  }
+]

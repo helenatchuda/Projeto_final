@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   
+</head>
+<body>
+   <h1>Utilizadores</h1>
+   <script>
+    async function Listar() {
+        const users = await fetch('api/utilizadores').then(response => response.json());
+        console.log(users);
+        localStorage.setItem('users', JSON.stringify(users));
+    }
+           
+    Listar();
+   </script>
+</body>
+</html>
