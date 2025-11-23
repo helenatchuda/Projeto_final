@@ -18,4 +18,3 @@ public class GestorPersistecia
         var json = File.ReadAllText(filePath);
         return JsonSerializer.Deserialize<T>(json, Options);
     }
-}
