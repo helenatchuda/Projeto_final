@@ -1,6 +1,7 @@
 
-using ProjetoApp.classes;
-
+using System.Security.Cryptography;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace ProjetoApp.Classes
 {
@@ -25,9 +26,6 @@ namespace ProjetoApp.Classes
         public bool EstadoLogado { get; private set; }
         public bool Activo { get; private set; }
         public DateTime? DataUltimoLogin { get; private set; }
-
-  
-        public Utilizador() { }
 
         public Utilizador(string nome, string email, string password)
         {

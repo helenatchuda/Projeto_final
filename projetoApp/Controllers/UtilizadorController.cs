@@ -1,33 +1,36 @@
-
-using ProjetoApp.persistecia;;
+using ProjetoApp.Classes; 
+using System.Linq;             
 
 namespace ProjetoApp.Controllers
 {
     public class UtilizadorController
     {
       
+        public GestorPersistencia Persistencia; 
 
-        public GestorPersistecia Persistecia;
         
-
-        public UtilizadorController(GestorPersistecia gestorPersistecia)
+        public UtilizadorController(GestorPersistencia gestorPersistencia)
         {
-            Persistecia = gestorPersistecia;
-             if (Persistecia= utilizadores.Count== 0)
+            
+            Persistencia = gestorPersistencia; 
+            
+           
+            if (Persistencia.Utilizadores.Count() == 0)
             {
-               var admin = new Utilizador(1,"Admin@estgv.tdm" ,"Admin123!");
-               Persistecia.utilizadores.Add(admin);
-                Persistecia.Guardar(utilizadores); 
+                var admin = new Utilizador(1,"Admin@estgv.tdm", "Admin123!");
+                
+                
+                Persistencia.Utilizadores.Add(admin);
+                
+                
+                Persistencia.Guardar(Persistencia.Utilizadores); 
             }
         }
+
         public IEnumerable<Utilizador> Listar()
         {
-            return persistecia.utilizadores;
+            
+            return Persistencia.Utilizadores; 
         }
-        
-
-        
-
-
     }
 }
