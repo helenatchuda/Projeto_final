@@ -5,8 +5,6 @@ using ProjetoApp.Classes;
 
 public class GestorPersistencia
 {
-    
-    
     private static readonly JsonSerializerOptions Options = new ()
     {
        WriteIndented = true,
@@ -15,7 +13,7 @@ public class GestorPersistencia
 
 
     private static readonly String FilePath = "utilizador.json";
-    public List<Utilizador> Utilizadores { get; set; }
+    public List<Utilizador> Utilizadores = new();
    
    public void Guardar<T>( T data)
     {
@@ -29,4 +27,6 @@ public class GestorPersistencia
         var json = File.ReadAllText(FilePath);
         return JsonSerializer.Deserialize<T>(json, Options);
     }
+
+    
 }

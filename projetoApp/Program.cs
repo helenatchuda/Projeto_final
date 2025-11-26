@@ -1,6 +1,3 @@
-
-
-
 using ProjetoApp.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
