@@ -1,0 +1,13 @@
+[
+  {
+    "Id": "5aea5c6c-be1e-4d77-9212-12c69a69392f",
+    "Nome": "Administrador",
+    "Email": "Admin@estgv.tdm",
+    "_passwordHash": "y/8QVWbHP9YBqdB5pZwMyJQKGPiYi/I7lbNasAB41nc=",
+    "_passwordSalt": "cE44aaP4FW05llnFZtc3Xg==",
+    "DataCriacao": "2025-11-26T11:44:58.7156047Z",
+    "EstadoLogado": false,
+    "Activo": true,
+    "DataUltimoLogin": null
+  }
+]

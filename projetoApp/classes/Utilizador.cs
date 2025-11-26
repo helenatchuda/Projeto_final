@@ -7,7 +7,7 @@ namespace ProjetoApp.Classes
 {
     public class Utilizador
     {
-                private const int SaltSize = 16; 
+        private const int SaltSize = 16; 
         private const int KeySize = 32;  
         private const int Iterations = 10000; 
 
@@ -16,7 +16,7 @@ namespace ProjetoApp.Classes
         public string Email { get; private set; }
         
         [JsonInclude] 
-        public string _passwordHash { get; private set; }
+        public string _passwordHash { get; private set; } = String.Empty;
         
         [JsonInclude]
         public string _passwordSalt { get; private set; } 

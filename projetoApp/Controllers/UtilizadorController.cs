@@ -1,5 +1,5 @@
 using ProjetoApp.Classes; 
-using System.Linq;             
+using System.Linq; 
 using System.Collections.Generic; 
 
 
@@ -29,5 +29,11 @@ namespace ProjetoApp.Controllers
         {
             return Persistencia.Utilizadores; 
         }
+
+        public Utilizador? Autenticar()
+        {
+            return null;  
+        }
+
     }
 }
