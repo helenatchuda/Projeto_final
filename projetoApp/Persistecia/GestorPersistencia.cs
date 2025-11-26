@@ -5,6 +5,31 @@ using ProjetoApp.Classes;
 
 public class GestorPersistencia
 {
+    private static readonly string ficheiroReceitas = "receitas.json";
+
+        // -------------------------
+        //     RECEITAS
+        // -------------------------
+
+        public static List<Receita> CarregarReceitas()
+        {
+            if (!File.Exists(ficheiroReceitas))
+                return new List<Receita>();
+
+            string json = File.ReadAllText(ficheiroReceitas);
+            return JsonSerializer.Deserialize<List<Receita>>(json) ?? new List<Receita>();
+        }
+
+        public static void GuardarReceitas(List<Receita> receitas)
+        {
+            string json = JsonSerializer.Serialize(receitas, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            File.WriteAllText(ficheiroReceitas, json);
+        }
+    
     private static readonly JsonSerializerOptions Options = new ()
     {
        WriteIndented = true,
