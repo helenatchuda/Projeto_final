@@ -5,6 +5,10 @@ using System.Text.RegularExpressions;
 
 namespace ProjetoApp.Classes
 {
+    /// <summary>
+    /// Classe que representa um utilizador do sistema.
+    /// Implementa validação, hashing de password, login e gestão de conta.
+    /// </summary>
     public class Utilizador
     {
         private const int SaltSize = 16; 
@@ -26,7 +30,13 @@ namespace ProjetoApp.Classes
         public bool Activo { get; private set; }
         public DateTime? DataUltimoLogin { get; private set; }
 
-      
+        
+        // ★ NECESSÁRIO para carregar dados do JSON
+        public List<Receita> Receitas { get; set; } = new List<Receita>();
+
+        // ★ Construtor vazio para desserialização JSON
+        public Utilizador() { }
+
         public Utilizador(string nome, string email, string password)
         {
             
