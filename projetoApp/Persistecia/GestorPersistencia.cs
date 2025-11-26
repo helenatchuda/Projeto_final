@@ -18,8 +18,11 @@ public class GestorPersistencia
         var json = JsonSerializer.Serialize(data, Options);
         File.WriteAllText(FilePath, json);
     }
+
+
     public T? Ler<T>()
     {
         var json = File.ReadAllText(FilePath);
         return JsonSerializer.Deserialize<T>(json, Options);
     }
+}
