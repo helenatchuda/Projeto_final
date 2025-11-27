@@ -26,11 +26,13 @@ namespace ProjetoApp.Classes
         public bool Activo { get; private set; }
         public DateTime? DataUltimoLogin { get; private set; }
 
-        [JsonConstructor]
-        public Utilizador()
-        {
+        
+        // ★ NECESSÁRIO para carregar dados do JSON
+        public List<Receita> Receitas { get; set; } = new List<Receita>();
 
-        }
+        // ★ Construtor vazio para desserialização JSON
+        public Utilizador() { }
+
         public Utilizador(string nome, string email, string password)
         {
 
@@ -149,4 +151,3 @@ namespace ProjetoApp.Classes
         }
     }
 }
-

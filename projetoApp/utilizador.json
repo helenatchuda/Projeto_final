@@ -1,11 +1,20 @@
 [
   {
+<<<<<<< HEAD
     "Id": "d7a9c722-bd0d-4ee0-aac3-4fced5f2cae1",
     "Nome": "Administrador",
     "Email": "Admin@estgv.tdm",
     "_passwordHash": "SBhD8tsZOdmhLxUQhEYLonOEXqblOClRA8mrxgRsMPc=",
     "_passwordSalt": "SUR3zttHGRdDAMGYHgeGSg==",
     "DataCriacao": "2025-11-27T10:53:56.173939Z",
+=======
+    "Id": "a4a0c880-a59d-497e-9dfd-9ee530da97db",
+    "Nome": "Administrador",
+    "Email": "Admin@estgv.tdm",
+    "_passwordHash": "WQIj4/CM\u002BMm38dosAIGoWNYp/afeA/sCm5Ep2ZLoy5E=",
+    "_passwordSalt": "p0Ve9wXzspv6Ys1JLK1ySA==",
+    "DataCriacao": "2025-11-26T12:36:00.0671842Z",
+>>>>>>> 9f9943eb20d8ae897975ca4bc2f9588831a05c28
     "EstadoLogado": false,
     "Activo": true,
     "DataUltimoLogin": null
