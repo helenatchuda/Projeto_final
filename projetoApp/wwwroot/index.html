@@ -1,18 +1,218 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
-   
+  <meta charset="UTF-8">
+  <title>Gestão de Finanças Pessoais</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 0; height: 100%;
+      background-color: #42763f;
+      overflow-x: hidden;
+      transition: width 0.3s ease;
+      color: white;
+    }
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 60px 0 0 0;
+    }
+    .sidebar nav ul li {
+      margin: 20px 0;
+    }
+    .sidebar nav ul li a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      display: block;
+      cursor: pointer;
+    }
+    .sidebar .close-btn {
+      position: absolute;
+      top: 10px; right: 15px;
+      font-size: 30px;
+      text-decoration: none;
+      color: white;
+    }
+
+    .main-content {
+      margin-left: 0;
+      transition: margin-left 0.3s ease;
+      padding: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .sidebar {
+        width: 250px;
+      }
+      .main-content {
+        margin-left: 250px;
+      }
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      width: 90%;
+    }
+    .modal header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .modal header h2 {
+      margin: 0;
+      font-size: 1.2em;
+    }
+    .modal header .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+    .modal form label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    .modal form input {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .modal form button {
+      margin-top: 15px;
+      padding: 8px 12px;
+    }
+  </style>
 </head>
 <body>
-   <h1>Utilizadores</h1>
-   <script>
-    async function Listar() {
-        const users = await fetch('api/utilizadores').then(response => response.json());
-        console.log(users);
-        localStorage.setItem('users', JSON.stringify(users));
-    }
-           
-    Listar();
-   </script>
+  <div id="sidebar" class="sidebar">
+    <a href="#" class="close-btn" id="closeBtn">×</a>
+    <nav>
+      <ul>
+        <li><a href="#" id="userLink">Utilizador</a></li>
+        <li><a href="#">Categoria</a></li>
+        <li><a href="#">Despesa</a></li>
+        <li><a href="#">Receita</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div id="main-content" class="main-content">
+    <button id="openBtn">☰ Menu</button>
+    <h1>Bem-vinda(o)!</h1>
+    <p>Conteúdo principal aqui...</p>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <header>
+        <h2>Registar Novo Utilizador</h2>
+        <button class="close-modal" id="closeModalBtn">&times;</button>
+      </header>
+      <form id="userForm">
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit">Registar</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar logic
+    const sidebar = document.getElementById('sidebar');
+    const openBtn = document.getElementById('openBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const mainContent = document.getElementById('main-content');
+
+    openBtn.addEventListener('click', () => {
+      sidebar.style.width = '250px';
+      mainContent.style.marginLeft = '250px';
+    });
+    closeBtn.addEventListener('click', () => {
+      sidebar.style.width = '0';
+      mainContent.style.marginLeft = '0';
+    });
+
+    // Modal logic
+    const userLink = document.getElementById('userLink');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const userForm = document.getElementById('userForm');
+
+    userLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      modalOverlay.style.display = 'flex';
+    });
+    closeModalBtn.addEventListener('click', () => {
+      modalOverlay.style.display = 'none';
+    });
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.style.display = 'none';
+      }
+    });
+
+    // Form submit → POST para a API
+    userForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('http://localhost:5000/utilizadores/registar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nome, email, password })
+        });
+
+         if (!response.ok) {
+      const msg = await response.text();
+       alert('Erro: ' + msg);
+      } else {
+       const msg = await response.text();
+        alert('Sucesso: ' + msg);
+         modalOverlay.style.display = 'none';
+        userForm.reset();
+       }
+
+      } catch (err) {
+        console.error('Erro de rede:', err);
+        alert('Erro de rede — ver console.');
+      }
+    });
+  </script>
 </body>
 </html>
+

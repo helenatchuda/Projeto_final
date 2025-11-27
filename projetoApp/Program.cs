@@ -1,31 +1,32 @@
 
 
-
 using ProjetoApp.Controllers;
+
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
- 
- app.UseDefaultFiles();
- app.UseStaticFiles();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 
 var gestorPersistencia = new GestorPersistencia();
-var repoUtilizadores = new UtilizadorController(gestorPersistencia);
 var controllerUtilizadores = new UtilizadorController(gestorPersistencia);
 
 
- 
+
 app.MapGet("api/utilizadores", () =>
- {
+{
     return controllerUtilizadores.Listar();
- });
+});
+
 
 
 app.MapPost("/utilizadores/registar", (string nome, string email, string password) =>
 {
     try
     {
-        //controllerUtilizadores.RegistarUtilizador(nome, email, password);
+        controllerUtilizadores.CriarNovoUtilizador(nome, email, password);
         return Results.Ok("Utilizador registado com sucesso!");
     }
     catch (Exception ex)
@@ -35,19 +36,30 @@ app.MapPost("/utilizadores/registar", (string nome, string email, string passwor
 });
 
 
+
 app.MapPost("/utilizadores/login", (string email, string password) =>
 {
-    //if (controllerUtilizadores.FazerLogin(email, password))
-    if (controllerUtilizadores.Autenticar() != null)
-        return Results.Ok("Login bem-sucedido!");
+    
+    var utilizador = controllerUtilizadores.FazerLogin(email, password);
+    
+    if (utilizador != null)
+        return Results.Ok(new { message = "Login bem-sucedido!", user = utilizador });
     else
-        return Results.BadRequest("Falha no login.");
+        
+        return Results.Unauthorized(); 
 });
 
 
 app.MapPost("/utilizadores/logout", (string email) =>
 {
-    //controllerUtilizadores.FazerLogout(email);
+    var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+    
+    if (utilizador != null)
+    {
+        utilizador.FazerLogout(); 
+        controllerUtilizadores.Persistencia.Guardar(controllerUtilizadores.Persistencia.Utilizadores);
+    }
+    
     return Results.Ok("Logout efetuado.");
 });
 
