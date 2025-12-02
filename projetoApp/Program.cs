@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 9f9943eb20d8ae897975ca4bc2f9588831a05c28
 using ProjetoApp.Controllers;
-
+using ProjetoApp.Classes;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -15,7 +10,9 @@ app.UseStaticFiles();
 
 var gestorPersistencia = new GestorPersistencia();
 var controllerUtilizadores = new UtilizadorController(gestorPersistencia);
-
+var controllerCategorias = new CategoriaController(gestorPersistencia);
+var controllerReceitas = new ReceitaController(gestorPersistencia, controllerCategorias); 
+var controllerDespesas = new DespesaController(gestorPersistencia, controllerCategorias);
 
 
 app.MapGet("api/utilizadores", () =>
