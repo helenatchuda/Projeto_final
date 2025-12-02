@@ -1,64 +1,69 @@
-using Microsoft.AspNetCore.Mvc;
+using ProjetoApp.Classes;
+public class CategoriaController
 
-[ApiController]
-[Route("api/[controller]")]
-public class CategoriaController : ControllerBase
 {
-    // GET api/categoria
-    [HttpGet]
-    public IActionResult GetCategorias()
+    public GestorPersistencia Persistencia { get; }
+
+    public CategoriaController(GestorPersistencia persistencia)
     {
-        return Ok(CategoriaRepository.Categorias);
+        Persistencia = persistencia;
     }
 
-    // POST api/categoria
-    [HttpPost]
-    public IActionResult CriarCategoria([FromBody] Categoria categoria)
+    public IReadOnlyList<Categoria> Listar()
     {
-        categoria.Id = CategoriaRepository.Categorias.Max(c => c.Id) + 1;
-        CategoriaRepository.Categorias.Add(categoria);
-
-        return Ok(new
-        {
-            mensagem = "Categoria criada com sucesso!",
-            categoria
-        });
+        return Persistencia.Categorias
+            .OrderBy(c => c.Nome)
+            .ToList()
+            .AsReadOnly();
     }
 
-    // PUT api/categoria/3
-    [HttpPut("{id}")]
-    public IActionResult EditarCategoria(int id, [FromBody] Categoria categoriaAtualizada)
+    public Categoria Criar(string nome)
     {
-        var categoriaExistente = CategoriaRepository.Categorias
-            .FirstOrDefault(c => c.Id == id);
-
-        if (categoriaExistente == null)
+        if (Persistencia.Categorias
+            .Any(c => c.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase)))
         {
-            return NotFound(new { mensagem = "Categoria não encontrada" });
+            throw new InvalidOperationException(
+                $"A categoria '{nome}' já existe."
+            );
         }
 
-        categoriaExistente.Nome = categoriaAtualizada.Nome;
-        categoriaExistente.UtilizadorId = categoriaAtualizada.UtilizadorId;
+        var novaCategoria = new Categoria(nome);
 
-        return Ok(new
-        {
-            mensagem = "Categoria atualizada com sucesso!",
-            categoria = categoriaExistente
-        });
+        Persistencia.Categorias.Add(novaCategoria);
+        Persistencia.GuardarCategorias();
+
+        return novaCategoria;
     }
 
-    // DELETE api/categoria/3
-    [HttpDelete("{id}")]
-    public IActionResult ApagarCategoria(int id)
+    public void Editar(Guid id, string novoNome)
     {
-        var categoria = CategoriaRepository.Categorias
-            .FirstOrDefault(c => c.Id == id);
+        var categoria = ObterPorId(id)
+            ?? throw new KeyNotFoundException("Categoria não encontrada.");
 
-        if (categoria == null)
-            return NotFound(new { mensagem = "Categoria não encontrada" });
+        if (Persistencia.Categorias
+            .Any(c => c.Nome.Equals(novoNome, StringComparison.OrdinalIgnoreCase)
+                    && c.Id != id))
+        {
+            throw new InvalidOperationException(
+                $"Já existe uma categoria com o nome '{novoNome}'."
+            );
+        }
 
-        CategoriaRepository.Categorias.Remove(categoria);
+        categoria.EditarNome(novoNome);
+        Persistencia.GuardarCategorias();
+    }
 
-        return Ok(new { mensagem = "Categoria apagada!" });
+    public void Eliminar(Guid id)
+    {
+        var categoria = ObterPorId(id)
+            ?? throw new KeyNotFoundException("Categoria não encontrada.");
+
+        Persistencia.Categorias.Remove(categoria);
+        Persistencia.GuardarCategorias();
+    }
+
+    public Categoria? ObterPorId(Guid id)
+    {
+        return Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
     }
 }
