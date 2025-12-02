@@ -16,6 +16,5 @@ namespace ProjetoApp.Classes
         [JsonConstructor]
         public Despesa() : base() { }
 
-        // Outros métodos específicos de Despesa (se necessário)
     }
 }

@@ -63,4 +63,30 @@ app.MapPost("/utilizadores/logout", (string email) =>
     return Results.Ok("Logout efetuado.");
 });
 
+app.MapGet("/api/{utilizadorId}/despesas", (Guid utilizadorId) =>
+{
+    var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Id == utilizadorId);
+    if (utilizador == null) return Results.NotFound("Utilizador não encontrado.");
+
+    return Results.Ok(controllerDespesas.ListarDespesasUtilizador(utilizador));
+});
+
+/// Cria uma nova despesa para um utilizador.
+app.MapPost("/api/{utilizadorId}/despesas/criar", (Guid utilizadorId, decimal valor, string descricao, Guid categoriaId) =>
+{
+    var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Id == utilizadorId);
+    if (utilizador == null) return Results.NotFound("Utilizador não encontrado.");
+
+    try
+    {
+        // Usa o DespesaController para criar e guardar
+        var despesa = controllerDespesas.Criar(utilizador, valor, descricao, categoriaId);
+        return Results.Created($"/api/{utilizadorId}/despesas/{despesa.Id}", despesa);
+    }
+    catch (Exception ex)
+    {
+        // Captura exceções de validação (valor <= 0 ou categoria inexistente)
+        return Results.BadRequest(ex.Message); 
+    }
+});
 app.Run();
