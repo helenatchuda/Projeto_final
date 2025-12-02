@@ -21,7 +21,7 @@ namespace ProjetoApp.Classes
         // ====================================================
         public List<Receita> Receitas { get; set; } = new List<Receita>();
         public List<Despesa> Despesas { get; set; } = new List<Despesa>();
-
+        public List<Categoria> Categorias { get; set; } = new List<Categoria>();
 
         // =================================
         // 3. CONSTRUTOR
