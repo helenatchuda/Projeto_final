@@ -1,64 +1,75 @@
-using Microsoft.AspNetCore.Mvc;
+using ProjetoApp.Classes;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
-[ApiController]
-[Route("api/[controller]")]
-public class CategoriaController : ControllerBase
+namespace ProjetoApp.Controllers
 {
-    // GET api/categoria
-    [HttpGet]
-    public IActionResult GetCategorias()
+    public class CategoriaController
     {
-        return Ok(CategoriaRepository.Categorias);
-    }
+        public GestorPersistencia Persistencia { get; private set; }
 
-    // POST api/categoria
-    [HttpPost]
-    public IActionResult CriarCategoria([FromBody] Categoria categoria)
-    {
-        categoria.Id = CategoriaRepository.Categorias.Max(c => c.Id) + 1;
-        CategoriaRepository.Categorias.Add(categoria);
-
-        return Ok(new
+        public CategoriaController(GestorPersistencia gestorPersistencia)
         {
-            mensagem = "Categoria criada com sucesso!",
-            categoria
-        });
-    }
-
-    // PUT api/categoria/3
-    [HttpPut("{id}")]
-    public IActionResult EditarCategoria(int id, [FromBody] Categoria categoriaAtualizada)
-    {
-        var categoriaExistente = CategoriaRepository.Categorias
-            .FirstOrDefault(c => c.Id == id);
-
-        if (categoriaExistente == null)
-        {
-            return NotFound(new { mensagem = "Categoria não encontrada" });
+            Persistencia = gestorPersistencia;
         }
 
-        categoriaExistente.Nome = categoriaAtualizada.Nome;
-        categoriaExistente.UtilizadorId = categoriaAtualizada.UtilizadorId;
-
-        return Ok(new
+        public IEnumerable<Categoria> Listar()
         {
-            mensagem = "Categoria atualizada com sucesso!",
-            categoria = categoriaExistente
-        });
-    }
+            return Persistencia.Categorias.OrderBy(c => c.Nome);
+        }
 
-    // DELETE api/categoria/3
-    [HttpDelete("{id}")]
-    public IActionResult ApagarCategoria(int id)
-    {
-        var categoria = CategoriaRepository.Categorias
-            .FirstOrDefault(c => c.Id == id);
+        public Categoria Criar(string nome)
+        {
+            if (Persistencia.Categorias.Any(c => c.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException($"A categoria '{nome}' já existe.");
+            }
 
-        if (categoria == null)
-            return NotFound(new { mensagem = "Categoria não encontrada" });
+            var novaCategoria = new Categoria(nome);
+            Persistencia.Categorias.Add(novaCategoria);
+            Persistencia.GuardarCategorias();
+            return novaCategoria;
+        }
 
-        CategoriaRepository.Categorias.Remove(categoria);
+        public void Editar(Guid id, string novoNome)
+        {
+            var categoria = Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
+            if (categoria == null)
+            {
+                throw new KeyNotFoundException("Categoria não encontrada.");
+            }
 
-        return Ok(new { mensagem = "Categoria apagada!" });
+            // Verifica se o novo nome já existe noutra categoria
+            if (Persistencia.Categorias.Any(c => c.Nome.Equals(novoNome, StringComparison.OrdinalIgnoreCase) && c.Id != id))
+            {
+                throw new InvalidOperationException($"Já existe uma categoria com o nome '{novoNome}'.");
+            }
+
+            categoria.EditarNome(novoNome);
+            Persistencia.GuardarCategorias();
+        }
+
+        public void Eliminar(Guid id)
+        {
+            var categoria = Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
+            if (categoria == null)
+            {
+                throw new KeyNotFoundException("Categoria não encontrada.");
+            }
+
+            // ★ IMPORTANTE: Lidar com transações que usam esta categoria. 
+            // O ideal seria proibir a eliminação se houver transações associadas, 
+            // ou mover essas transações para uma categoria "Não Especificada".
+            
+            // Aqui, vamos apenas eliminar:
+            Persistencia.Categorias.Remove(categoria);
+            Persistencia.GuardarCategorias();
+        }
+        
+        public Categoria? ObterPorId(Guid id)
+        {
+            return Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
+        }
     }
 }
