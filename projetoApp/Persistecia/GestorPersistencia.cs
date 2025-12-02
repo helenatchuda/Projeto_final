@@ -22,7 +22,6 @@ public class GestorPersistencia
 
 
     private static readonly String FilePath = "utilizador.json";
-    public List<Utilizador> Utilizadores = new();
    
    public void Guardar<T>( T data)
     {
