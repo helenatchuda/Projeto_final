@@ -19,11 +19,6 @@ public class GestorPersistencia
     public List<Categoria> Categorias = new(); // Nova lista
 
     // Construtor: Carrega todos os dados ao iniciar
-    private static readonly JsonSerializerOptions Options = new ()
-    {
-       WriteIndented = true,
-      
-    };
 
 
     private static readonly String FilePath = "utilizador.json";
