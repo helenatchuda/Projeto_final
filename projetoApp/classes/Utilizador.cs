@@ -29,6 +29,7 @@ namespace ProjetoApp.Classes
         
         // ★ NECESSÁRIO para carregar dados do JSON
         public List<Receita> Receitas { get; set; } = new List<Receita>();
+        public List<Despesa> Despesas { get; set; } = new List<Despesa>();
 
         // ★ Construtor vazio para desserialização JSON
         public Utilizador() { }
