@@ -5,6 +5,7 @@ using ProjetoApp.Classes;
 
 public class GestorPersistencia
 {
+    // Construtor: Carrega todos os dados ao iniciar
     private static readonly JsonSerializerOptions Options = new ()
     {
         WriteIndented = true,
@@ -12,16 +13,12 @@ public class GestorPersistencia
         // mas por enquanto não é estritamente necessário se usar a abordagem de persistir listas separadas.
     };
 
-    private const string FilePathUtilizadores = "utilizadores.json"; // Renomeado o ficheiro
-    private const string FilePathCategorias = "categorias.json"; // Novo ficheiro
+    private const string FilePathUtilizadores = "utilizadores.json";
+    private const string FilePathCategorias = "categorias.json";
+    private static readonly String FilePath = "utilizador.json";
 
     public List<Utilizador> Utilizadores = new();
     public List<Categoria> Categorias = new(); // Nova lista
-
-    // Construtor: Carrega todos os dados ao iniciar
-
-
-    private static readonly String FilePath = "utilizador.json";
    
    public void Guardar<T>( T data)
     {
