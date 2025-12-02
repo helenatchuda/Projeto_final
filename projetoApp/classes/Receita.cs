@@ -16,6 +16,5 @@ namespace ProjetoApp.Classes
         [JsonConstructor]
         public Receita() : base() { }
 
-        // Outros métodos específicos de Receita (se necessário, mas neste projeto basta a herança)
     }
 }

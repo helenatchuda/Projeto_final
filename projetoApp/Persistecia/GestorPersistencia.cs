@@ -31,6 +31,26 @@ public class GestorPersistencia
         var json = File.ReadAllText(FilePath);
         return JsonSerializer.Deserialize<T>(json, Options);
     }
+// ----------- Categorias -----------
+private const string FileCategorias = "categorias.json";
+public List<Categoria> Categoria { get; private set; } = new();
 
-    
+public void GuardarCategorias()
+{
+    var json = JsonSerializer.Serialize(Categorias, Options);
+    File.WriteAllText(FileCategorias, json);
+}
+
+public void CarregarCategorias()
+{
+    if (!File.Exists(FileCategorias))
+    {
+        Categorias = new List<Categoria>();
+        return;
+    }
+
+    var json = File.ReadAllText(FileCategorias);
+    Categorias = JsonSerializer.Deserialize<List<Categoria>>(json, Options)
+                 ?? new List<Categoria>();
+}
 }
