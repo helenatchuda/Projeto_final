@@ -14,7 +14,7 @@ namespace ProjetoApp.Classes
         public DateTime Data { get; private set; }
         public Guid CategoriaId { get; set; } // ID da Categoria a que pertence
         
-        // Propriedade Valor com validação para garantir que é positivo.
+        // Propriedade Valor com validação para garantir que é positivo
         public decimal Valor
         {
             get => _valor;
@@ -26,7 +26,7 @@ namespace ProjetoApp.Classes
             }
         }
 
-        // Propriedade Descricao com validação.
+        // Propriedade Descricao com validação
         public string Descricao
         {
             get => _descricao;
