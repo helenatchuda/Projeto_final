@@ -1,75 +1,69 @@
 using ProjetoApp.Classes;
-using System.Collections.Generic;
-using System.Linq;
-using System;
+public class CategoriaController
 
-namespace ProjetoApp.Controllers
 {
-    public class CategoriaController
+    public GestorPersistencia Persistencia { get; }
+
+    public CategoriaController(GestorPersistencia persistencia)
     {
-        public GestorPersistencia Persistencia { get; private set; }
+        Persistencia = persistencia;
+    }
 
-        public CategoriaController(GestorPersistencia gestorPersistencia)
+    public IReadOnlyList<Categoria> Listar()
+    {
+        return Persistencia.Categorias
+            .OrderBy(c => c.Nome)
+            .ToList()
+            .AsReadOnly();
+    }
+
+    public Categoria Criar(string nome)
+    {
+        if (Persistencia.Categorias
+            .Any(c => c.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase)))
         {
-            Persistencia = gestorPersistencia;
+            throw new InvalidOperationException(
+                $"A categoria '{nome}' já existe."
+            );
         }
 
-        public IEnumerable<Categoria> Listar()
+        var novaCategoria = new Categoria(nome);
+
+        Persistencia.Categorias.Add(novaCategoria);
+        Persistencia.GuardarCategorias();
+
+        return novaCategoria;
+    }
+
+    public void Editar(Guid id, string novoNome)
+    {
+        var categoria = ObterPorId(id)
+            ?? throw new KeyNotFoundException("Categoria não encontrada.");
+
+        if (Persistencia.Categorias
+            .Any(c => c.Nome.Equals(novoNome, StringComparison.OrdinalIgnoreCase)
+                    && c.Id != id))
         {
-            return Persistencia.Categorias.OrderBy(c => c.Nome);
+            throw new InvalidOperationException(
+                $"Já existe uma categoria com o nome '{novoNome}'."
+            );
         }
 
-        public Categoria Criar(string nome)
-        {
-            if (Persistencia.Categorias.Any(c => c.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase)))
-            {
-                throw new InvalidOperationException($"A categoria '{nome}' já existe.");
-            }
+        categoria.EditarNome(novoNome);
+        Persistencia.GuardarCategorias();
+    }
 
-            var novaCategoria = new Categoria(nome);
-            Persistencia.Categorias.Add(novaCategoria);
-            Persistencia.GuardarCategorias();
-            return novaCategoria;
-        }
+    public void Eliminar(Guid id)
+    {
+        var categoria = ObterPorId(id)
+            ?? throw new KeyNotFoundException("Categoria não encontrada.");
 
-        public void Editar(Guid id, string novoNome)
-        {
-            var categoria = Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
-            if (categoria == null)
-            {
-                throw new KeyNotFoundException("Categoria não encontrada.");
-            }
+        Persistencia.Categorias.Remove(categoria);
+        Persistencia.GuardarCategorias();
+    }
 
-            // Verifica se o novo nome já existe noutra categoria
-            if (Persistencia.Categorias.Any(c => c.Nome.Equals(novoNome, StringComparison.OrdinalIgnoreCase) && c.Id != id))
-            {
-                throw new InvalidOperationException($"Já existe uma categoria com o nome '{novoNome}'.");
-            }
-
-            categoria.EditarNome(novoNome);
-            Persistencia.GuardarCategorias();
-        }
-
-        public void Eliminar(Guid id)
-        {
-            var categoria = Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
-            if (categoria == null)
-            {
-                throw new KeyNotFoundException("Categoria não encontrada.");
-            }
-
-            // ★ IMPORTANTE: Lidar com transações que usam esta categoria. 
-            // O ideal seria proibir a eliminação se houver transações associadas, 
-            // ou mover essas transações para uma categoria "Não Especificada".
-            
-            // Aqui, vamos apenas eliminar:
-            Persistencia.Categorias.Remove(categoria);
-            Persistencia.GuardarCategorias();
-        }
-        
-        public Categoria? ObterPorId(Guid id)
-        {
-            return Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
-        }
+    public Categoria? ObterPorId(Guid id)
+    {
+        return Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
     }
 }
