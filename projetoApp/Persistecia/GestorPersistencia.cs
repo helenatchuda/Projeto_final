@@ -1,56 +1,53 @@
-using System.Runtime.CompilerServices;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
-using ProjetoApp.Classes;
+using ProjetoApp.Classes; // Necessário para a classe Utilizador
 
-
-public class GestorPersistencia
+namespace ProjetoApp.Persistence // Namespace correto
 {
-   
-    private static readonly JsonSerializerOptions Options = new ()
+    public class GestorPersistencia
     {
-        WriteIndented = true,
+        private const string FilePathUtilizadores = "utilizadores.json";
+
+        private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
+        {
+            WriteIndented = true 
+        };
+
+      
+        public List<Utilizador> Utilizadores { get; private set; } = new List<Utilizador>();
         
-    };
 
-    private const string FilePathUtilizadores = "utilizadores.json";
-    private const string FilePathCategorias = "categorias.json";
-    private static readonly String FilePath = "utilizador.json";
+       
+        public void Guardar(List<Utilizador> utilizadores)
+        {
+            var json = JsonSerializer.Serialize(utilizadores, Options);
+            File.WriteAllText(FilePathUtilizadores, json);
+        }
+        
+       
+        public void GuardarUtilizadores()
+        {
+            Guardar(this.Utilizadores);
+        }
 
-    public List<Utilizador> Utilizadores = new();
-    public List<Categoria> Categorias = new();
-   
-   public void Guardar<T>( T data)
-    {
-        var json = JsonSerializer.Serialize(data, Options);
-        File.WriteAllText(FilePath, json);
+        
+        
+        public void CarregarUtilizadores()
+        {
+            if (!File.Exists(FilePathUtilizadores))
+            {
+               
+                Utilizadores = new List<Utilizador>(); 
+                return;
+            }
+
+            var json = File.ReadAllText(FilePathUtilizadores);
+           
+            var dados = JsonSerializer.Deserialize<List<Utilizador>>(json, Options);
+            
+          
+            Utilizadores = dados ?? new List<Utilizador>(); 
+        }
     }
-
-
-    public T? Ler<T>()
-    {
-        var json = File.ReadAllText(FilePath);
-        return JsonSerializer.Deserialize<T>(json, Options);
-    }
-// ----------- Categorias -----------
-private const string FileCategorias = "categorias.json";
-public List<Categoria> Categoria { get; private set; } = new();
-
-public void GuardarCategorias()
-{
-    var json = JsonSerializer.Serialize(Categorias, Options);
-    File.WriteAllText(FileCategorias, json);
-}
-
-public void CarregarCategorias()
-{
-    if (!File.Exists(FileCategorias))
-    {
-        Categorias = new List<Categoria>();
-        return;
-    }
-
-    var json = File.ReadAllText(FileCategorias);
-    Categorias = JsonSerializer.Deserialize<List<Categoria>>(json, Options)
-                 ?? new List<Categoria>();
-}
 }

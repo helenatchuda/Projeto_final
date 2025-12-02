@@ -31,7 +31,7 @@ namespace ProjetoApp.Classes
             if (alvo is Administrador)
                 throw new InvalidOperationException("Não é permitido suspender contas de outros Administradores.");
             
-            alvo.SuspenderConta();
+           
         }
 
         public void AtivarOutraConta(Utilizador alvo)

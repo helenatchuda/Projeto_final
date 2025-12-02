@@ -1,5 +1,6 @@
 [
   {
+<<<<<<< Updated upstream
 
     "Id": "a4a0c880-a59d-497e-9dfd-9ee530da97db",
     "Nome": "Administrador",
@@ -7,8 +8,28 @@
     "_passwordHash": "WQIj4/CM\u002BMm38dosAIGoWNYp/afeA/sCm5Ep2ZLoy5E=",
     "_passwordSalt": "p0Ve9wXzspv6Ys1JLK1ySA==",
     "DataCriacao": "2025-11-26T12:36:00.0671842Z",
+=======
+    "Id": "f1ccf052-7265-4ca9-a8cc-b473903afc51",
+    "Nome": "Administrador",
+    "Email": "Admin@estgv.tdm",
+    "_passwordHash": "30SuPk/TqmLjjJIedTFXlgeaBCJHRTC/\u002BZ0\u002BYPzVVSQ=",
+    "_passwordSalt": "uBUaECFIWGhSoFWgIAO1YQ==",
+    "DataCriacao": "2025-11-28T10:38:17.2785809Z",
+>>>>>>> Stashed changes
     "EstadoLogado": false,
     "Activo": true,
-    "DataUltimoLogin": null
+    "DataUltimoLogin": null,
+    "Receitas": []
+
+
+
+   
+   
   }
+
+  
+
+  
 ]
+
+

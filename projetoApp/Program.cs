@@ -1,5 +1,9 @@
 using ProjetoApp.Controllers;
+
 using ProjetoApp.Classes;
+
+using ProjetoApp.Classes; 
+
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -15,19 +19,18 @@ var controllerReceitas = new ReceitaController(gestorPersistencia, controllerCat
 var controllerDespesas = new DespesaController(gestorPersistencia, controllerCategorias);
 
 
-app.MapGet("api/utilizadores", () =>
+
+app.MapGet("/api/utilizadores", () =>
 {
     return controllerUtilizadores.Listar();
 });
-
-
 
 app.MapPost("/utilizadores/registar", (string nome, string email, string password) =>
 {
     try
     {
-        controllerUtilizadores.CriarNovoUtilizador(nome, email, password);
-        return Results.Ok("Utilizador registado com sucesso!");
+        var novo = controllerUtilizadores.CriarNovoUtilizador(nome, email, password);
+        return Results.Ok(new { message = "Utilizador registado!", user = novo });
     }
     catch (Exception ex)
     {
@@ -35,33 +38,32 @@ app.MapPost("/utilizadores/registar", (string nome, string email, string passwor
     }
 });
 
-
-
 app.MapPost("/utilizadores/login", (string email, string password) =>
 {
-    
     var utilizador = controllerUtilizadores.FazerLogin(email, password);
-    
-    if (utilizador != null)
-        return Results.Ok(new { message = "Login bem-sucedido!", user = utilizador });
-    else
-        
-        return Results.Unauthorized(); 
-});
 
+    if (utilizador == null)
+        return Results.Unauthorized();
+
+    return Results.Ok(new { message = "Login bem-sucedido!", user = utilizador });
+});
 
 app.MapPost("/utilizadores/logout", (string email) =>
 {
-    var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-    
+    var utilizador = controllerUtilizadores
+        .Listar()
+        .FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+
     if (utilizador != null)
     {
-        utilizador.FazerLogout(); 
-        controllerUtilizadores.Persistencia.Guardar(controllerUtilizadores.Persistencia.Utilizadores);
+        utilizador.FazerLogout();
+       
+        gestorPersistencia.GuardarUtilizadores(); 
     }
-    
+
     return Results.Ok("Logout efetuado.");
 });
+
 
 app.MapGet("/api/{utilizadorId}/despesas", (Guid utilizadorId) =>
 {
@@ -89,4 +91,11 @@ app.MapPost("/api/{utilizadorId}/despesas/criar", (Guid utilizadorId, decimal va
         return Results.BadRequest(ex.Message); 
     }
 });
+
+
+
+
+
+
+
 app.Run();
