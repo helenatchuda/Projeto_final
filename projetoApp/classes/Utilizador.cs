@@ -97,5 +97,27 @@ namespace ProjetoApp.Classes
             decimal totalDespesas = Despesas.Sum(d => d.Valor);
             return totalReceitas - totalDespesas;
         }
+        // =================================
+        // 6. MÉTODOS DE GESTÃO DE ESTADO
+        // =================================
+
+        /// <summary>
+        /// Desativa (suspende) a conta do utilizador.
+        /// </summary>
+        public void Suspender()
+        {
+            if (!this.Activo) return; // Já está inativo
+            this.Activo = false;
+            this.EstadoLogado = false; // Força logout
+        }
+
+        /// <summary>
+        /// Ativa a conta do utilizador (se estiver inativa).
+        /// </summary>
+        public void Ativar()
+        {
+            this.Activo = true;
+        }
+        
     }
 }
