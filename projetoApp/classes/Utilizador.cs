@@ -10,9 +10,9 @@ namespace ProjetoApp.Classes
         // 1. PROPRIEDADES DE UTILIZADOR
         // =================================
         public Guid Id { get; set; }
-        public string Nome { get; set; }
-        public string Email { get; set; }
-        public string PasswordHash { get; set; } // Armazenar o hash da password (boa prática)
+        public string Nome { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty;// Armazenar o hash da password (boa prática)
         public bool Activo { get; set; } = true;
         public bool EstadoLogado { get; private set; } = false;
 

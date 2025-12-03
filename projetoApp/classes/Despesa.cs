@@ -2,12 +2,12 @@ using System;
 
 namespace ProjetoApp.Classes
 {
-    public class Despesa
+    public class Despesa 
     {
         public Guid Id { get; set; }
         public Guid UtilizadorId { get; set; }
         public decimal Valor { get; set; }
-        public string Descricao { get; set; }
+        public string Descricao { get; set; } = string.Empty;
         public Guid CategoriaId { get; set; }
         public DateTime Data { get; set; }
 

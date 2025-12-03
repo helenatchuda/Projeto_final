@@ -6,8 +6,8 @@ namespace ProjetoApp.Classes
     // Classe abstrata para representar atributos comuns a Receita e Despesa
     public abstract class Transacao
     {
-        private decimal _valor;
-        private string _descricao;
+        private decimal _valor = 0m;
+        private string _descricao = string.Empty;
         
         public Guid Id { get; private set; }
         public Guid UtilizadorId { get; private set; } // Quem registou a transação
