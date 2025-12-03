@@ -1,43 +1,21 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace ProjetoApp.Classes
 {
-    public class Despesa 
+    // Despesa herda de Transacao
+    public class Despesa : Transacao 
     {
-        public Guid Id { get; set; }
-        public Guid UtilizadorId { get; set; }
-        public decimal Valor { get; set; }
-        public string Descricao { get; set; } = string.Empty;
-        public Guid CategoriaId { get; set; }
-        public DateTime Data { get; set; }
-
-        // Construtor usado no DespesaController.Criar()
+        // O construtor chama o construtor da classe base (base(...))
         public Despesa(Guid utilizadorId, decimal valor, string descricao, Guid categoriaId)
+            : base(utilizadorId, valor, descricao, categoriaId)
         {
-            // Validações básicas
-            if (valor <= 0)
-                throw new ArgumentException("O valor da despesa deve ser positivo.");
-
-            Id = Guid.NewGuid();
-            UtilizadorId = utilizadorId;
-            Valor = valor;
-            Descricao = descricao;
-            CategoriaId = categoriaId;
-            Data = DateTime.Now;
         }
 
-        // Construtor sem argumentos (para serialização/deserialização)
-        public Despesa() { }
+        // Construtor vazio para desserialização JSON
+        [JsonConstructor]
+        public Despesa() : base() { }
 
-        // Método usado no DespesaController.Editar()
-        public void Editar(decimal novoValor, string novaDescricao, Guid novaCategoriaId)
-        {
-            if (novoValor <= 0)
-                throw new ArgumentException("O novo valor deve ser positivo.");
-
-            Valor = novoValor;
-            Descricao = novaDescricao;
-            CategoriaId = novaCategoriaId;
-        }
+        // Outros métodos específicos de Despesa (se necessário)
     }
 }
