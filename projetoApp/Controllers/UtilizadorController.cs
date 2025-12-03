@@ -1,38 +1,53 @@
 using ProjetoApp.Classes;
-using ProjetoApp.Persistence; // <<<< LINHA ADICIONADA/CORRIGIDA (Resolve o erro de namespace)
+using ProjetoApp.Persistence; 
 using System.Linq;
 using System.Collections.Generic;
-using System; // Necessário para Console, InvalidOperationException, etc.
+using System; 
 
 namespace ProjetoApp.Controllers
 {
+    /// <summary>
+    /// Controller responsável pela gestão da lógica de negócio relacionada com Utilizadores
+    /// (Registo, Login, Listagem e inicialização do Administrador).
+    /// </summary>
     public class UtilizadorController
     {
-        // Alterado de 'public' para 'private' e adicionado '?' para boa prática.
-        private GestorPersistencia Persistencia { get; set; } 
+        // Acesso privado ao gestor de persistência.
+        private GestorPersistencia Persistencia { get; } 
 
+        /// <summary>
+        /// Inicializa o UtilizadorController e garante que existe um Administrador na base de dados.
+        /// </summary>
         public UtilizadorController(GestorPersistencia gestorPersistencia)
         {
-            // O tipo GestorPersistencia agora é reconhecido graças ao using acima.
             Persistencia = gestorPersistencia;
 
-            // Lógica de Inicialização: Cria o Admin se não houver utilizadores
+            // Lógica de Inicialização: Cria o Administrador inicial se não houver utilizadores
             if (!Persistencia.Utilizadores.Any())
             {
-                var admin = new Utilizador("Administrador", "Admin@estgv.tdm", "Admin123!");
+                // CORREÇÃO DE POO: Instancia como Administrador, não Utilizador
+                var admin = new Administrador("Administrador", "Admin@estgv.tdm", "Admin123!");
                 Persistencia.Utilizadores.Add(admin);
-                // Assume-se que Guardar foi corrigido para aceitar a lista (como discutido)
-                Persistencia.Guardar(Persistencia.Utilizadores); 
+                
+                // CORREÇÃO: Usa o método GuardarUtilizadores sem argumentos
+                Persistencia.GuardarUtilizadores(); 
             }
         }
 
-        // --- MÉTODOS DE NEGÓCIO ---
+        // ------------------- MÉTODOS DE NEGÓCIO -------------------
 
+        /// <summary>
+        /// Lista todos os utilizadores registados no sistema.
+        /// </summary>
         public IEnumerable<Utilizador> Listar()
         {
             return Persistencia.Utilizadores;
         }
 
+        /// <summary>
+        /// Tenta fazer login com o email e password fornecidos.
+        /// </summary>
+        /// <returns>O objeto Utilizador se o login for bem-sucedido, caso contrário, null.</returns>
         public Utilizador? FazerLogin(string email, string password)
         {
             var utilizador = Persistencia.Utilizadores
@@ -43,17 +58,24 @@ namespace ProjetoApp.Controllers
                 try
                 {
                     utilizador.FazerLogin(password);
-                    Persistencia.Guardar(Persistencia.Utilizadores);
+                    
+                    // CORREÇÃO: Guarda o novo estado (EstadoLogado = true)
+                    Persistencia.GuardarUtilizadores();
+                    
                     return utilizador;
                 }
                 catch (InvalidOperationException)
                 {
-                    return null; // Login falhou (password incorreta)
+                    // Trata exceções de login (Password incorreta ou Conta inativa)
+                    return null; 
                 }
             }
             return null; // Utilizador não encontrado
         }
 
+        /// <summary>
+        /// Cria um novo utilizador, valida o email (para duplicidade) e guarda na persistência.
+        /// </summary>
         public Utilizador CriarNovoUtilizador(string nome, string email, string password)
         {
             if (Persistencia.Utilizadores.Any(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)))
@@ -63,13 +85,20 @@ namespace ProjetoApp.Controllers
 
             var novoUtilizador = new Utilizador(nome, email, password);
             Persistencia.Utilizadores.Add(novoUtilizador);
-            Persistencia.Guardar(Persistencia.Utilizadores);
+            
+            // CORREÇÃO: Guarda a lista atualizada
+            Persistencia.GuardarUtilizadores();
+            
             return novoUtilizador;
         }
 
 
-        // --- MÉTODOS DE INTERFACE / MENU CORRIGIDOS ---
+        // ------------------- MÉTODOS DE INTERFACE / MENU -------------------
+        // (Estes métodos são para consola/terminal e não fazem parte da API web)
 
+        /// <summary>
+        /// Inicia o menu principal da aplicação em modo consola.
+        /// </summary>
         public void Iniciar()
         {
             bool sair = false;
@@ -77,7 +106,7 @@ namespace ProjetoApp.Controllers
             {
                 Console.Clear();
                 Console.WriteLine("=====================================");
-                Console.WriteLine("||        MENU PRINCIPAL           ||");
+                Console.WriteLine("||        MENU PRINCIPAL           ||");
                 Console.WriteLine("=====================================");
                 Console.WriteLine("1. Fazer Login");
                 Console.WriteLine("2. Criar Novo Utilizador");
@@ -146,7 +175,7 @@ namespace ProjetoApp.Controllers
                 Console.ResetColor();
             }
             Console.WriteLine("\nPressione qualquer tecla para continuar...");
-            Console.ReadKey(); // <<<< ADICIONADO Console.ReadKey()
+            Console.ReadKey(); 
         }
 
         private void MenuCriarNovoUtilizador()
@@ -187,7 +216,7 @@ namespace ProjetoApp.Controllers
                 Console.ResetColor();
             }
             Console.WriteLine("\nPressione qualquer tecla para continuar...");
-            Console.ReadKey(); // <<<< ADICIONADO Console.ReadKey()
+            Console.ReadKey(); 
         }
 
         private void MenuListarUtilizadores()
@@ -209,7 +238,8 @@ namespace ProjetoApp.Controllers
 
                 foreach (var u in utilizadores)
                 {
-                    string tipo = u.GetType().Name;
+                    // Usa o nome da classe (Utilizador ou Administrador) para identificação
+                    string tipo = u.GetType().Name; 
                     string nomeFormatado = $"{u.Nome} ({tipo}) - {u.Id.ToString().Substring(0, 8)}";
 
                     Console.WriteLine("{0,-40} {1,-30} {2,-10} {3,-10}",
