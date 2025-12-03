@@ -16,6 +16,7 @@ var controllerUtilizadores = new UtilizadorController(gestorPersistencia);
 var controllerCategorias = new CategoriaController(gestorPersistencia);
 var controllerReceitas = new ReceitaController(gestorPersistencia, controllerCategorias); 
 var controllerDespesas = new DespesaController(gestorPersistencia, controllerCategorias);
+var controllerRelatorios = new RelatorioController(controllerCategorias); //novo para os relatorios
 
 
 
