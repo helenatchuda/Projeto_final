@@ -68,3 +68,6 @@ public class CategoriaController
         return Persistencia.Categorias.FirstOrDefault(c => c.Id == id);
     }
 }
+
+
+
