@@ -1,18 +1,7 @@
 using ProjetoApp.Classes;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 using ProjetoApp.Persistence;
-=======
-=======
->>>>>>> Stashed changes
-using ProjetoApp.Persistence; // <<<< LINHA ADICIONADA/CORRIGIDA (Resolve o erro de namespace)
-using System.Linq;
-using System.Collections.Generic;
 using System; // Necessário para Console, InvalidOperationException, etc.
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
 public class CategoriaController
 
 {
