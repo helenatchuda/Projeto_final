@@ -72,7 +72,7 @@ app.MapGet("/api/{utilizadorId}/despesas", (Guid utilizadorId) =>
     return Results.Ok(controllerDespesas.ListarDespesasUtilizador(utilizador));
 });
 
-/// Cria uma nova despesa para um utilizador.
+
 app.MapPost("/api/{utilizadorId}/despesas/criar", (Guid utilizadorId, decimal valor, string descricao, Guid categoriaId) =>
 {
     var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Id == utilizadorId);
@@ -80,20 +80,16 @@ app.MapPost("/api/{utilizadorId}/despesas/criar", (Guid utilizadorId, decimal va
 
     try
     {
-        // Usa o DespesaController para criar e guardar
+        
         var despesa = controllerDespesas.Criar(utilizador, valor, descricao, categoriaId);
         return Results.Created($"/api/{utilizadorId}/despesas/{despesa.Id}", despesa);
     }
     catch (Exception ex)
     {
-        // Captura exceções de validação (valor <= 0 ou categoria inexistente)
+       
         return Results.BadRequest(ex.Message); 
     }
 });
-
-
-
-
 
 
 

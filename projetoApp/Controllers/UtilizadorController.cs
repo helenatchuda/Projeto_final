@@ -220,7 +220,7 @@ namespace ProjetoApp.Controllers
                 }
             }
             Console.WriteLine("\nPressione qualquer tecla para continuar...");
-            Console.ReadKey(); // <<<< ADICIONADO Console.ReadKey()
+            Console.ReadKey(); 
         }
     }
 }
