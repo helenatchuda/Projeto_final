@@ -1,4 +1,5 @@
 using ProjetoApp.Classes;
+using ProjetoApp.Persistence;
 public class CategoriaController
 
 {

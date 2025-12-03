@@ -1,8 +1,7 @@
 using ProjetoApp.Controllers;
 
 using ProjetoApp.Classes;
-
-using ProjetoApp.Classes; 
+using ProjetoApp.Persistence;
 
 
 var builder = WebApplication.CreateBuilder(args);
