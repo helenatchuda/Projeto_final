@@ -4,416 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Finaças Pessoal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js" defer></script>
     
-    <style>
-       
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #b0e88a; /
-        }
-
-       
-        .dashboard-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-       
-        .sidebar {
-            position: fixed;
-            top: 0; left: 0;
-            width: 250px; 
-            height: 100%;
-            background-color: #ffffff; 
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-            overflow-x: hidden;
-            transition: width 0.3s ease;
-            color: #090707;
-            padding: 20px 0;
-            z-index: 10;
-            font-size: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .sidebar .close-btn { 
-            display: none;
-        }
-
-       
-        .app-logo {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 0 20px;
-            margin-bottom: 5px;
-        }
-        .app-logo .title-group {
-            display: flex;
-            align-items: center;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #0a0909;
-            margin-bottom: 5px;
-        }
-        .app-logo .title-group i {
-            color: #6a1b9a;
-            margin-right: 10px;
-            font-size: 1.5em;
-        }
-        .app-logo small {
-            font-size: 0.8em;
-            color: #211b1b;
-            margin-left: 40px; 
-        }
-
    
-        .user-profile {
-            padding: 15px 20px;
-            border-top: 1px solid #eee;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #6a1b9a;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 1.1em;
-        }
-        .user-profile small {
-            color: #777;
-            font-size: 0.8em;
-        }
-
-        .sidebar nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .sidebar nav ul li a {
-            color: #555;
-            text-decoration: none;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            margin: 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .sidebar nav ul li a i {
-            margin-right: 10px;
-            font-size: 1.1em;
-        }
-        .sidebar nav ul li a:hover {
-            background-color: #f0f0ff;
-            color: #6a1b9a;
-        }
-        .sidebar nav ul li.active a {
-            background-color: #6a1b9a; 
-            color: white;
-            font-weight: 600;
-        }
-        .sidebar nav ul li.active a i {
-            color: white;
-        }
-        .submenu {
-            margin-left: 20px;
-            display: none;
-           
-        }
-
-       
-        .main-content {
-            margin-left: 250px; 
-            flex-grow: 1;
-            padding: 30px;
-            transition: margin-left 0.3s ease;
-        }
-        .main-content .open-btn { 
-            display: none;
-        }
-        .page-content {
-            display: none; 
-        }
-        .page-content.active-page {
-            display: block; 
-        }
-
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-        }
-        .page-header h1 {
-            font-size: 28px;
-            background-color: #dcdbdc;
-            color: #6a1b9a;
-            margin-bottom: 5px;
-            font-size: 30px;
-        }
-        .page-header p {
-            color: #fef2f2;
-            font-size: 16px;
-        }
-        .add-btn {
-            background-color: #6a1b9a;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .add-btn:hover {
-            background-color: #8c2cd2;
-        }
-
-     
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .card {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            position: relative;
-            border: 1px solid #eee;
-        }
-        .card h4 {
-            font-size: 14px;
-            color: #777;
-            margin: 5px 0 10px;
-        }
-        .card p {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-        }
-        .card i {
-            font-size: 24px;
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 8px;
-            border-radius: 5px;
-            background-color: rgba(255, 255, 255, 0.7);
-        }
-       
-        .card.total i, .card.dashboard-balance i
-         { color: #6a1b9a; 
-            
-            border: 1px 
-            solid #6a1b9a20;
-             background-color: #6a1b9a10;}
-        .card.expense i, .card.dashboard-expense i 
-        { color: #f44336; 
-            border: 1px 
-        solid #f4433620; 
-        
-        background-color: #f4433610;}
-        .card.income i, .card.dashboard-income i 
-        { color: #4caf50; 
-            border: 1px 
-            solid #4caf5020;
-             background-color: #4caf5010;}
-        .card.dashboard-goal i 
-        { color: #ff9800; 
-            border: 1px 
-            solid #ff980020;
-             background-color: #ff980010;}
-        
-
-        .category-lists-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-        .category-list {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #eee;
-        }
-       
-        .data-table-container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #eee;
-            overflow-x: auto; 
-        }
-
-        .data-table-container h3 {
-            margin-bottom: 15px;
-            color: #333;
-            font-size: 1.2em;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        .data-table th, .data-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .data-table th {
-            background-color: #f7f9fc;
-            color: #6a1b9a;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85em;
-        }
-
-        .data-table tbody tr:hover {
-            background-color: #f9f9f9;
-        }
-
-        .data-table .action-btns button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #6a1b9a;
-            margin-left: 5px;
-            font-size: 1em;
-            padding: 5px;
-            border-radius: 4px;
-            transition: color 0.2s, background-color 0.2s;
-        }
-
-        .data-table .action-btns button:hover {
-            color: #6a1b9a;
-            background-color: #f0f0ff;
-        }
-        
-      
-        .dashboard-charts {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .chart-placeholder {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px #888;
-            height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-style: italic;
-            color: #888;
-        }
-        
-      
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal {
-            background: #faf9fb;
-            padding: 25px;
-            border-radius: 12px;
-            max-width: 450px;
-            width: 250px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-         .modal .closeModal {
-    width: 100px;
-  
-    top: 15px;
-    right: 15px;
-    z-index: 1001; 
-    }
-
-
-
-
-       
-      @media screen and (max-width: 768px) {
-
-    .sidebar {
-        width: 0;
-    }
-
-    .main-content {
-        margin-left: 0;
-        padding: 15px;
-    }
-
-    .main-content .open-btn {
-        display: block;
-    }
-
-    .sidebar.open { 
-        width: 250px;
-    }
-
-    .main-content.pushed {
-        margin-left: 250px;
-    }
-
-    .summary-cards {
-        grid-template-columns: 1fr; 
-    }
-
-    .category-lists-container {
-        grid-template-columns: 1fr; 
-    }
-
-    .dashboard-charts {
-        grid-template-columns: 1fr; 
-    }
-
-    .sidebar .close-btn { 
-        display: block; 
-    }
-}
-
-    </style>
 </head>
 <body>
 
@@ -530,9 +124,9 @@
                         <p id="totalDespesasMes">0.00 €</p>
                     </div>
                     <div class="card expense">
-                        <i class="fas fa-list-alt"></i>
-                        <h4>AtualizarDespesa</h4>
-                        <p id="countDespesasMes"></p>
+                       <i class="fas fa-list-alt"></i>
+                       <h4>Nº de Transações</h4>
+                         <p id="countDespesasMes">0</p>
                     </div>
                     <div class="card income">
                         <i class="fas fa-chart-line">€</i>
@@ -647,30 +241,142 @@
                 </section>
             </section>
 
-        </div>
-    </div>
+     
 
-    <div id="loginModal" class="modal-overlay">
-        <div class="modal">
-            <header><h2>Login</h2>
-             <button class="closeModal" data-modal="loginModal">&times;</button></header>
-            <form id="loginForm">
-                <label>Email:</label><input type="email" id="loginEmail" required>
-                <label>Password:</label><input type="password" id="loginPass" required>
-                <button type="submit">Entrar</button>
-            </form>
-        </div>
+    <div id="loginpopup" class="popup-overlay">
+        <h2 class="popup__title">Login</h2>
+        <form class="popup__form form popup__form-edit-name" novalidate>
+          <label for="name">
+            <input
+              type="text"
+              id="name"
+              class="form__input  form__input-userName"
+              placeholder="Nome"
+              required
+              minlength="2"
+              maxlength="40"
+            />
+            <span
+              class="form__error"
+              id="name-error"
+              aria-live="polite"
+            ></span>
+          </label>
+          <label for="password">
+            <input
+              type="text"
+              id="description"
+              class="form__input  form__input-about"
+              placeholder="password  "
+              required
+              minlength="2"
+              maxlength="200"
+            />
+            <span
+              class="form__error"
+              id="description-error"
+              aria-live="polite"
+            ></span>
+          </label>
+          <button
+            type="submit"
+            class="popup__save-button popup__save-button_disabled"
+            disabled
+          >
+            Entrar
+          </button>
+          <div
+            class="form__error-summary"
+            role="alert"
+            aria-live="polite"
+          ></div>
+        </form>
+      </div>
     </div>
-    <div id="registerModal" class="modal-overlay">
-        <div class="modal">
-            <header><h2>Criar Nova Conta</h2><button class="closeModal" data-modal="registerModal">&times;</button></header>
-            <form id="registerForm">
-                <label>Nome:</label><input type="text" id="regNome" required>
-                <label>Email:</label><input type="email" id="regEmail" required>
-                <label>Password:</label><input type="password" id="regPass" required>
-                <button type="submit">Registar</button>
-            </form>
-        </div>
+    </div>
+    <div id="registerpopup" class="popup-overlay">
+         <h2 class="popup__title">Criar Perfil</h2>
+        <form class="popup__form form popup__form-edit-name" novalidate>
+          <label for="name">
+            <input
+              type="text"
+              id="name"
+              class="form__input  form__input-userName"
+              placeholder="Nome"
+              required
+              minlength="2"
+              maxlength="40"
+            />
+            <span
+              class="form__error"
+              id="name-error"
+              aria-live="polite"
+            ></span>
+          </label>
+          <label for="userEmail">
+            <input
+              type="text"
+              id="userEmail"
+              class="form__input  form__input-about"
+              placeholder="userEmail  "
+              required
+              minlength="2"
+              maxlength="200"
+            />
+            <span
+              class="form__error"
+              id="email-error"
+              aria-live="polite"
+            ></span>
+          </label>
+          <label for="password">
+            <input
+              type="text"
+              id="password"
+              class="form__input  form__input-about"
+              placeholder="password  "
+              required
+              minlength="2"
+              maxlength="200"
+            />
+            <span
+              class="form__error"
+              id="password"
+              aria-live="polite"
+            ></span>
+          </label>
+          <label for="userEmail">
+            <input
+              type="text"
+              id="confirmPassword"
+              class="form__input  form__input-about"
+              placeholder="confirmPassword  "
+              required
+              minlength="2"
+              maxlength="200"
+            />
+            <span
+              class="form__error"
+              id="confirmPassword-error"
+              aria-live="polite"
+            ></span>
+          </label>
+          
+          <button
+            type="submit"
+            class="popup__save-button popup__save-button_disabled"
+            disabled
+          >
+            Criar
+          </button>
+          <div
+            class="form__error-summary"
+            role="alert"
+            aria-live="polite"
+          ></div>
+        </form>
+      </div>
+    </div>
     </div>
     
     <div id="categoryModal" class="modal-overlay">
@@ -726,364 +432,6 @@
     </div>
 
     
-    <script>
-    
-        let categories = [
-            { id: 1, name: 'Alimentação', type: 'expense', color: '#ff7f50' },
-            { id: 2, name: 'Transporte', type: 'expense', color: '#4169e1' },
-            { id: 3, name: 'Moradia', type: 'expense', color: '#00ced1' },
-            { id: 9, name: 'Salário', type: 'income', color: '#4caf50' },
-            { id: 10, name: 'Freelance', type: 'income', color: '#1e90ff' },
-        ];
-        let nextCategoryId = categories.length + 1;
-
-        let transactions = [
-         
-            { id: 1, date: '2025-11-25', description: 'Supermercado Mensal', value: 125.50, type: 'expense', category: 'Alimentação' },
-            { id: 2, date: '2025-11-26', description: 'Gasóleo', value: 55.00, type: 'expense', category: 'Transporte' },
-            { id: 5, date: '2025-11-01', description: 'Renda', value: 650.00, type: 'expense', category: 'Moradia' },
-          
-            { id: 3, date: '2025-11-05', description: 'Salário (Novembro)', value: 1500.00, type: 'income', category: 'Salário' },
-            { id: 4, date: '2025-11-15', description: 'Projeto X', value: 350.00, type: 'income', category: 'Freelance' },
-        ];
-        let nextTransactionId = transactions.length + 1;
-
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('main-content');
-        const transactionModal = document.getElementById('transactionModal');
-        const transactionForm = document.getElementById('transactionForm');
-        const transactionCategorySelect = document.getElementById('transactionCategory');
-        const transactionModalTitle = document.getElementById('transactionModalTitle');
-        const transactionTypeHidden = document.getElementById('transactionTypeHidden');
-        const categoryModal = document.getElementById('categoryModal');
-        const categoryForm = document.getElementById('categoryForm');
-        const categoryNameInput = document.getElementById('categoryName');
-        const categoryTypeInput = document.getElementById('categoryType');
-        const categoryColorInput = document.getElementById('categoryColor');
-        const categoryIdInput = document.getElementById('categoryId');
-
-
-      
-        function showPage(pageId, navId) {
-      
-            document.querySelectorAll('.page-content').forEach(page => {
-                page.classList.remove('active-page');
-            });
-           
-            document.getElementById(pageId).classList.add('active-page');
-
-          
-            document.querySelectorAll('.sidebar nav ul li').forEach(item => {
-                item.classList.remove('active');
-            });
-          
-            const activeNav = document.getElementById(navId);
-            if (activeNav) {
-                activeNav.closest('li').classList.add('active');
-            }
-
-           
-            if (pageId === 'page-dashboard') {
-                renderDashboard();
-            } else if (pageId === 'page-despesas') {
-                renderTransactions('expense', 'despesasTableBody', 'totalDespesasMes', 'countDespesasMes', 'maiorDespesa');
-            } else if (pageId === 'page-receitas') {
-                renderTransactions('income', 'receitasTableBody', 'totalReceitasMes', 'countReceitasMes', 'maiorReceita');
-            } else if (pageId === 'page-categorias') {
-                renderCategories();
-            }
-        }
-        
-     
-        function renderDashboard() {
-            const expenseTotal = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.value, 0);
-            const incomeTotal = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.value, 0);
-            const saldo = incomeTotal - expenseTotal;
-
-            document.getElementById('dashboardSaldo').textContent = saldo.toFixed(2) + ' €';
-            document.getElementById('dashboardReceitas').textContent = incomeTotal.toFixed(2) + ' €';
-            document.getElementById('dashboardDespesas').textContent = expenseTotal.toFixed(2) + ' €';
-            
-         
-            const lastTransactionsBody = document.getElementById('lastTransactionsBody');
-            lastTransactionsBody.innerHTML = '';
-            
-           
-            const recentTransactions = transactions.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-
-            recentTransactions.forEach(t => {
-                const tr = document.createElement('tr');
-                const typeColor = t.type === 'income' ? '#4caf50' : '#f44336';
-                const typeText = t.type === 'income' ? 'Receita' : 'Despesa';
-
-                tr.innerHTML = `
-                    <td>${t.date}</td>
-                    <td style="color: ${typeColor}; font-weight: bold;">${typeText}</td>
-                    <td>${t.description}</td>
-                    <td style="font-weight: bold; color: ${typeColor}">${t.value.toFixed(2)} €</td>
-                `;
-                lastTransactionsBody.appendChild(tr);
-            });
-        }
-
-
-        function renderTransactions(type, tableBodyId, totalId, countId, maxId) {
-            const filteredTransactions = transactions.filter(t => t.type === type);
-            const tableBody = document.getElementById(tableBodyId);
-
-            if (!tableBody) return;
-
-            tableBody.innerHTML = '';
-
-            let totalValue = 0;
-            let maxValue = 0;
-
-            filteredTransactions.forEach(t => {
-                totalValue += t.value;
-                if (t.value > maxValue) {
-                    maxValue = t.value;
-                }
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${t.date}</td>
-                    <td>${t.description}</td>
-                    <td>${t.category}</td>
-                    <td style="font-weight: bold;">${t.value.toFixed(2)} €</td>
-                    <td class="action-btns">
-                        <button onclick="editTransaction(${t.id})"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteTransaction(${t.id})"><i class="fas fa-trash-alt"></i></button>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
-
-         
-            document.getElementById(totalId).textContent = totalValue.toFixed(2) + ' €';
-            document.getElementById(countId).textContent = filteredTransactions.length;
-            document.getElementById(maxId).textContent = maxValue.toFixed(2) + ' €';
-        }
-        
-  
-        function renderCategories() {
-            const expenseList = document.getElementById('expenseCategoriesList');
-            const incomeList = document.getElementById('incomeCategoriesList');
-            
-            if (!expenseList || !incomeList) return; 
-
-            expenseList.innerHTML = '';
-            incomeList.innerHTML = '';
-
-            const expenseCats = categories.filter(c => c.type === 'expense');
-            const incomeCats = categories.filter(c => c.type === 'income');
-
-            document.getElementById('totalCategoriesCount').textContent = categories.length;
-            document.getElementById('expenseCategoriesCount').textContent = expenseCats.length;
-            document.getElementById('incomeCategoriesCount').textContent = incomeCats.length;
-
-            const createCategoryListItem = (category) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span class="color-indicator" style="background-color: ${category.color};"></span>
-                    <span class="category-name">${category.name}</span>
-                    <button class="delete-btn" onclick="deleteCategory(${category.id})"><i class="fas fa-trash-alt"></i></button>
-                `;
-                return li;
-            };
-
-            expenseCats.forEach(cat => expenseList.appendChild(createCategoryListItem(cat)));
-            incomeCats.forEach(cat => incomeList.appendChild(createCategoryListItem(cat)));
-        }
-
-    
-        
-        function populateCategorySelect(type) {
-            transactionCategorySelect.innerHTML = '';
-            
-            const typeInPortuguese = type === 'expense' ? 'Despesas' : 'Receitas';
-            
-            const placeholder = document.createElement('option');
-            placeholder.value = '';
-            placeholder.textContent = `Selecione uma categoria de ${typeInPortuguese}`;
-            placeholder.disabled = true;
-            placeholder.selected = true;
-            transactionCategorySelect.appendChild(placeholder);
-
-            categories.filter(c => c.type === type).forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat.name;
-                option.textContent = cat.name;
-                transactionCategorySelect.appendChild(option);
-            });
-        }
-        
-        function addOrUpdateTransaction(data) {
-            if (data.id) {
-              
-                const index = transactions.findIndex(t => t.id == data.id);
-                if (index !== -1) {
-                    transactions[index] = { ...transactions[index], ...data };
-                }
-                console.log(`Transação ID ${data.id} atualizada (Mockup).`);
-            } else {
-             
-                const newTransaction = { id: nextTransactionId++, ...data };
-                transactions.push(newTransaction);
-                console.log(`Transação de ${data.type} adicionada (Mockup).`);
-            }
-            
-            
-            const pageId = data.type === 'expense' ? 'page-despesas' : 'page-receitas';
-            const navId = data.type === 'expense' ? 'despesasLink' : 'receitasLink';
-            showPage(pageId, navId);
-        }
-
-        function deleteTransaction(id) {
-            if (confirm("Tem certeza que deseja apagar esta transação?")) {
-                const type = transactions.find(t => t.id === id)?.type;
-                transactions = transactions.filter(t => t.id !== id);
-                
-                
-                const pageId = type === 'expense' ? 'page-despesas' : 'page-receitas';
-                const navId = type === 'expense' ? 'despesasLink' : 'receitasLink';
-                showPage(pageId, navId);
-
-                console.log("Transação apagada (Mockup).");
-            }
-        }
-        
-        function deleteCategory(id) {
-            if (confirm("Tem certeza que deseja apagar esta categoria?")) {
-              
-                const categoryName = categories.find(c => c.id === id)?.name;
-                const used = transactions.some(t => t.category === categoryName);
-                
-                if (used) {
-                    alert("Não é possível apagar. Esta categoria está associada a transações!");
-                    return;
-                }
-                
-                categories = categories.filter(c => c.id !== id);
-                renderCategories();
-                console.log("Categoria apagada (Mockup).");
-            }
-        }
-
-      
-        document.getElementById('openBtn').onclick = () => {
-            sidebar.style.width = "250px";
-            mainContent.style.marginLeft = "250px";
-            sidebar.classList.add('open');
-            mainContent.classList.add('pushed');
-        };
-        document.getElementById('closeBtn').onclick = () => {
-            sidebar.style.width = "0";
-            mainContent.style.marginLeft = "0";
-            sidebar.classList.remove('open');
-            mainContent.classList.remove('pushed');
-        };
-
-       
-        document.getElementById('dashboardLink').onclick = (e) => { e.preventDefault(); showPage('page-dashboard', 'dashboardLink'); };
-        document.getElementById('despesasLink').onclick = (e) => { e.preventDefault(); showPage('page-despesas', 'despesasLink'); };
-        document.getElementById('receitasLink').onclick = (e) => { e.preventDefault(); showPage('page-receitas', 'receitasLink'); };
-        document.getElementById('categoryLink').onclick = (e) => { e.preventDefault(); showPage('page-categorias', 'categoryLink'); };
-        
-       
-        document.getElementById('toggleUserMenu').onclick = () => {
-            const submenu = document.getElementById('userSubmenu');
-            submenu.style.display = submenu.style.display === "block" ? "none" : "block";
-        };
-
-       
-        document.querySelectorAll('.closeModal').forEach(btn => {
-            btn.onclick = (e) => {
-                let modal = e.target.closest('.modal-overlay');
-                if (modal) {
-                    modal.style.display = "none";
-                }
-            };
-        });
-        window.onclick = (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                e.target.style.display = "none";
-            }
-        };
-
-       
-        document.getElementById('addDespesaBtn').onclick = () => {
-            transactionModalTitle.textContent = "Nova Despesa";
-            transactionTypeHidden.value = 'expense';
-            transactionForm.reset();
-            populateCategorySelect('expense');
-            transactionModal.style.display = "flex";
-        };
-
-        document.getElementById('addReceitaBtn').onclick = () => {
-            transactionModalTitle.textContent = "Nova Receita";
-            transactionTypeHidden.value = 'income';
-            transactionForm.reset();
-            populateCategorySelect('income');
-            transactionModal.style.display = "flex";
-        };
-        
-      
-        transactionForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const data = {
-                id: document.getElementById('transactionId').value || null,
-                date: document.getElementById('transactionDate').value,
-                description: document.getElementById('transactionDescription').value,
-                value: document.getElementById('transactionValue').value,
-                category: document.getElementById('transactionCategory').value,
-                type: transactionTypeHidden.value 
-            };
-            addOrUpdateTransaction(data);
-            transactionModal.style.display = "none";
-        });
-     
-        document.getElementById('addCategoryBtn').onclick = () => {
-            categoryModalTitle.textContent = "Nova Categoria";
-            categoryForm.reset(); 
-            categoryIdInput.value = ''; 
-            categoryModal.style.display = "flex";
-        };
-        categoryForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = categoryNameInput.value.trim();
-            const type = categoryTypeInput.value;
-            const color = categoryColorInput.value;
-            
-            if (name) {
-               
-                const newCategory = { id: nextCategoryId++, name, type, color };
-                categories.push(newCategory);
-                renderCategories();
-                categoryModal.style.display = "none";
-            }
-        });
-        
-
-        document.getElementById('loginLink').onclick = () => { document.getElementById('loginModal').style.display = "flex"; };
-        document.getElementById('registerLink').onclick = () => { document.getElementById('registerModal').style.display = "flex"; };
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert("Ação: Login. Chamar API /utilizadores/login.");
-            document.getElementById('loginModal').style.display = "none";
-        });
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert("Ação: Registo. Chamar API /utilizadores/registar.");
-            document.getElementById('registerModal').style.display = "none";
-        });
-
-
-      
-        document.addEventListener('DOMContentLoaded', () => {
-           
-            showPage('page-dashboard', 'dashboardLink'); 
-        });
-    </script>
 </body>
 </html>
 

@@ -33,7 +33,7 @@ namespace ProjetoApp.Controllers
             return utilizador.Despesas.OrderByDescending(d => d.Data);
         }
         
-        // Obtém uma despesa pelo ID
+       
         public Despesa? ObterDespesaPorId(Utilizador utilizador, Guid despesaId)
         {
             if (utilizador == null)
@@ -48,19 +48,18 @@ namespace ProjetoApp.Controllers
             if (utilizador == null)
                 throw new ArgumentNullException(nameof(utilizador), "O utilizador não pode ser nulo.");
                 
-            // Valida se a categoria existe usando o CategoriaController
+           
             if (CategoriaController.ObterPorId(categoriaId) == null)
             {
                 throw new KeyNotFoundException("Categoria de Despesa inválida. Não encontrada.");
             }
 
-            // A classe Despesa que você forneceu trata da validação de valor > 0
             var novaDespesa = new Despesa(utilizador.Id, valor, descricao, categoriaId);
             
-            // Adiciona a despesa à lista do utilizador
+          
             utilizador.AdicionarDespesa(novaDespesa); 
             
-            // Persiste as alterações no GestorPersistencia
+        
             Persistencia.GuardarUtilizadores(); 
             
             return novaDespesa;
