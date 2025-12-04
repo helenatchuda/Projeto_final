@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Finaças Pessoal</title>
+    <title>Gestão de Finanças Pessoal</title>
     <link rel="stylesheet" href="./style.css">
     <script src="./script.js" defer></script>
-    
-   
 </head>
 <body>
 
@@ -18,14 +16,14 @@
             <div class="app-logo">
                 <div class="title-group">
                     <i class="fas fa-chart-pie"></i>
-                    <span>Gestão de Finaças</span>
+                    <span>Gestão de Finanças</span>
                 </div>
                 <small>Gestão Financeira</small>
             </div>
 
             <div class="user-profile">
                 <div class="user-avatar" id="userAvatar">Ad</div>
-                <span id="userName">Admni</span>
+                <span id="userName">Admin</span>
                 <small id="userEmail"></small>
             </div>
 
@@ -35,17 +33,15 @@
                         <a id="toggleUserMenu"><i class="fas fa-user-circle"></i> Utilizador <i class="fas fa-caret-down"></i></a>
                         <div class="submenu" id="userSubmenu">
                             <a id="loginLink">Login</a>
-                             <a id="logoutlink">Logout</a>
+                            <a id="logoutLink">Logout</a>
                             <a id="registerLink">Criar Conta</a>
-                            </div>
+                        </div>
                     </li>
                     <li class="active"><a id="dashboardLink"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a id="despesasLink"><i class="fas fa-wallet"></i> Despesas</a></li>
                     <li><a id="receitasLink"><i class="fas fa-funnel-dollar"></i> Receitas</a></li>
                     <li><a id="categoryLink"><i class="fas fa-folder-open"></i> Categorias</a></li>
-                    <li><a id="relatorioLink"><i class="fas fa-arrow-down"></i>Relatório</a></li>
-                    
-                    
+                    <li><a id="relatorioLink"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
                 </ul>
             </nav>
             <div style="padding: 20px; margin-top: auto; font-size: 0.8em; color: #aaa;">
@@ -60,7 +56,7 @@
                 <header class="page-header">
                     <div>
                         <h1>Dashboard</h1>
-                        <p>Visão geral das suas finanças</p>
+                        <p>Visão geral das finanças</p>
                     </div>
                 </header>
 
@@ -243,143 +239,249 @@
                 </section>
             </section>
 
-     
+            <section id="page-relatorios" class="page-content">
+                <header class="page-header">
+                    <div>
+                        <h1>Relatórios</h1>
+                        <p>Análise detalhada das suas finanças</p>
+                    </div>
+                    <button class="add-btn" id="gerarRelatorioBtn">
+                        <i class="fas fa-download"></i> Exportar PDF
+                    </button>
+                </header>
 
- <!-- POPUP DE LOGIN -->
-<div id="loginpopup" class="popup-overlay">
-    <div class="modal">
-        <header>
-            <h2 class="popup__title">Login</h2>
-            <button class="closeModal" data-modal="loginpopup">&times;</button>
-        </header>
-        <form class="popup__form form" novalidate>
-            <div class="form-group">
-                <label for="loginEmail">Email</label>
-                <input
-                    type="email"
-                    id="loginEmail"
-                    class="form__input form__input-email"
-                    placeholder="seu@email.com"
-                    required
-                />
-                <span class="form__error" id="loginEmail-error" aria-live="polite"></span>
-            </div>
-            <div class="form-group">
-                <label for="loginPassword">Password</label>
-                <input
-                    type="password"
-                    id="loginPassword"
-                    class="form__input form__input-password"
-                    placeholder="••••••••"
-                    required
-                    minlength="6"
-                />
-                <span class="form__error" id="loginPassword-error" aria-live="polite"></span>
-            </div>
-            <button type="submit" class="popup__save-button">
-                Entrar
-            </button>
-            <div class="form-footer">
-                <p>Não tem conta? <a href="#" id="goToRegister">Crie uma conta</a></p>
-            </div>
-        </form>
-    </div>
-</div>
+                <section class="filtros-relatorio">
+                    <div class="filtro-group">
+                        <label for="periodoRelatorio">Período:</label>
+                        <select id="periodoRelatorio">
+                            <option value="mes_atual">Mês Atual</option>
+                            <option value="mes_anterior">Mês Anterior</option>
+                            <option value="trimestre">Último Trimestre</option>
+                            <option value="semestre">Último Semestre</option>
+                            <option value="ano">Ano Atual</option>
+                            <option value="personalizado">Personalizado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filtro-group" id="filtroDataPersonalizada" style="display: none;">
+                        <label for="dataInicio">Data Início:</label>
+                        <input type="date" id="dataInicio">
+                        
+                        <label for="dataFim">Data Fim:</label>
+                        <input type="date" id="dataFim">
+                    </div>
+                    
+                    <div class="filtro-group">
+                        <label for="tipoTransacao">Tipo de Transação:</label>
+                        <select id="tipoTransacao">
+                            <option value="todas">Todas</option>
+                            <option value="receitas">Apenas Receitas</option>
+                            <option value="despesas">Apenas Despesas</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn-filtrar" id="aplicarFiltros">
+                        <i class="fas fa-filter"></i> Aplicar Filtros
+                    </button>
+                </section>
 
-<!-- POPUP DE REGISTRO -->
-<div id="registerpopup" class="popup-overlay">
-    <div class="modal">
-        <header>
-            <h2 class="popup__title">Criar Conta</h2>
-            <button class="closeModal" data-modal="registerpopup">&times;</button>
-        </header>
-        <form class="popup__form form" novalidate>
-            <div class="form-group">
-                <label for="registerName">Nome Completo</label>
-                <input
-                    type="text"
-                    id="registerName"
-                    class="form__input form__input-userName"
-                    placeholder="Seu nome"
-                    required
-                    minlength="2"
-                    maxlength="40"
-                />
-                <span class="form__error" id="registerName-error" aria-live="polite"></span>
-            </div>
-            <div class="form-group">
-                <label for="registerEmail">Email</label>
-                <input
-                    type="email"
-                    id="registerEmail"
-                    class="form__input form__input-email"
-                    placeholder="seu@email.com"
-                    required
-                />
-                <span class="form__error" id="registerEmail-error" aria-live="polite"></span>
-            </div>
-            <div class="form-group">
-                <label for="registerPassword">Password</label>
-                <input
-                    type="password"
-                    id="registerPassword"
-                    class="form__input form__input-password"
-                    placeholder="••••••••"
-                    required
-                    minlength="6"
-                    maxlength="200"
-                />
-                <span class="form__error" id="registerPassword-error" aria-live="polite"></span>
-            </div>
-            <div class="form-group">
-                <label for="registerConfirmPassword">Confirmar Password</label>
-                <input
-                    type="password"
-                    id="registerConfirmPassword"
-                    class="form__input form__input-password"
-                    placeholder="••••••••"
-                    required
-                    minlength="6"
-                    maxlength="200"
-                />
-                <span class="form__error" id="registerConfirmPassword-error" aria-live="polite"></span>
-            </div>
-            <button type="submit" class="popup__save-button">
-                Criar Conta
-            </button>
-            <div class="form-footer">
-                <p>Já tem uma conta? <a href="#" id="goToLogin">Faça login</a></p>
-            </div>
-        </form>
+                <section class="estatisticas-relatorio">
+                    <div class="card-relatorio">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Total Movimentado</h4>
+                        <p id="totalMovimentado">0.00 €</p>
+                    </div>
+                    <div class="card-relatorio">
+                        <i class="fas fa-arrow-up"></i>
+                        <h4>Total Receitas</h4>
+                        <p id="totalReceitasRelatorio">0.00 €</p>
+                    </div>
+                    <div class="card-relatorio">
+                        <i class="fas fa-arrow-down"></i>
+                        <h4>Total Despesas</h4>
+                        <p id="totalDespesasRelatorio">0.00 €</p>
+                    </div>
+                    <div class="card-relatorio">
+                        <i class="fas fa-balance-scale"></i>
+                        <h4>Saldo Final</h4>
+                        <p id="saldoFinalRelatorio">0.00 €</p>
+                    </div>
+                </section>
+
+                <section class="data-table-container">
+                    <h3>Transações do Período</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tipo</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transacoesRelatorioBody">
+                        </tbody>
+                    </table>
+                </section>
+
+                <div class="graficos-relatorio">
+                    <div class="grafico-container">
+                        <h4>Distribuição por Categoria</h4>
+                        <div class="chart-placeholder" id="graficoCategorias">
+                            Gráfico de pizza por categoria
+                        </div>
+                    </div>
+                    <div class="grafico-container">
+                        <h4>Evolução Mensal</h4>
+                        <div class="chart-placeholder" id="graficoEvolucao">
+                            Gráfico de linha mensal
+                        </div>
+                    </div>
+                </div>
+
+                <section class="resumo-categorias">
+                    <h3>Resumo por Categoria</h3>
+                    <div class="categorias-grid" id="resumoCategorias">
+                    </div>
+                </section>
+            </section>
+        </div>
     </div>
-</div>
+
+    <!-- POPUP DE LOGIN -->
+    <div id="loginpopup" class="popup-overlay">
+        <div class="modal">
+            <header>
+                <h2 class="popup__title">Login</h2>
+                <button class="closeModal" data-modal="loginpopup">&times;</button>
+            </header>
+            <form class="popup__form form" novalidate>
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input
+                        type="email"
+                        id="loginEmail"
+                        class="form__input form__input-email"
+                        placeholder="seu@email.com"
+                        required
+                    />
+                    <span class="form__error" id="loginEmail-error" aria-live="polite"></span>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        class="form__input form__input-password"
+                        placeholder="••••••••"
+                        required
+                        minlength="6"
+                    />
+                    <span class="form__error" id="loginPassword-error" aria-live="polite"></span>
+                </div>
+                <button type="submit" class="popup__save-button">
+                    Entrar
+                </button>
+                <div class="form-footer">
+                    <p>Não tem conta? <a href="#" id="goToRegister">Crie uma conta</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- POPUP DE REGISTRO -->
+    <div id="registerpopup" class="popup-overlay">
+        <div class="modal">
+            <header>
+                <h2 class="popup__title">Criar Conta</h2>
+                <button class="closeModal" data-modal="registerpopup">&times;</button>
+            </header>
+            <form class="popup__form form" novalidate>
+                <div class="form-group">
+                    <label for="registerName">Nome Completo</label>
+                    <input
+                        type="text"
+                        id="registerName"
+                        class="form__input form__input-userName"
+                        placeholder="Seu nome"
+                        required
+                        minlength="2"
+                        maxlength="40"
+                    />
+                    <span class="form__error" id="registerName-error" aria-live="polite"></span>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input
+                        type="email"
+                        id="registerEmail"
+                        class="form__input form__input-email"
+                        placeholder="seu@email.com"
+                        required
+                    />
+                    <span class="form__error" id="registerEmail-error" aria-live="polite"></span>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input
+                        type="password"
+                        id="registerPassword"
+                        class="form__input form__input-password"
+                        placeholder="••••••••"
+                        required
+                        minlength="6"
+                        maxlength="200"
+                    />
+                    <span class="form__error" id="registerPassword-error" aria-live="polite"></span>
+                </div>
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Confirmar Password</label>
+                    <input
+                        type="password"
+                        id="registerConfirmPassword"
+                        class="form__input form__input-password"
+                        placeholder="••••••••"
+                        required
+                        minlength="6"
+                        maxlength="200"
+                    />
+                    <span class="form__error" id="registerConfirmPassword-error" aria-live="polite"></span>
+                </div>
+                <button type="submit" class="popup__save-button">
+                    Criar Conta
+                </button>
+                <div class="form-footer">
+                    <p>Já tem uma conta? <a href="#" id="goToLogin">Faça login</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
     
+    <!-- MODAL DE CATEGORIA -->
     <div id="categoryModal" class="modal-overlay">
         <div class="modal">
             <header>
                 <h2 id="categoryModalTitle">Nova Categoria</h2>
                 <button class="closeModal" data-modal="categoryModal">&times;</button>
             </header>
-
             <form id="categoryForm">
                 <label for="categoryName">Nome da Categoria:</label>
                 <input type="text" id="categoryName" required>
-
                 <label for="categoryType">Tipo:</label>
                 <select id="categoryType" required>
                     <option value="expense">Despesa</option>
                     <option value="income">Receita</option>
                 </select>
-                
                 <label for="categoryColor">Cor (Hex):</label>
                 <input type="color" id="categoryColor" value="#6a1b9a">
-
                 <button type="submit" id="saveCategoryBtn">Guardar Categoria</button>
                 <input type="hidden" id="categoryId">
             </form>
         </div>
     </div>
 
+    <!-- MODAL DE TRANSAÇÃO -->
     <div id="transactionModal" class="modal-overlay">
         <div class="modal">
             <header>
@@ -389,23 +491,19 @@
             <form id="transactionForm">
                 <label for="transactionDate">Data:</label>
                 <input type="date" id="transactionDate" required>
-
                 <label for="transactionDescription">Descrição:</label>
                 <input type="text" id="transactionDescription" required>
-
                 <label for="transactionValue">Valor:</label>
                 <input type="number" id="transactionValue" step="0.01" min="0.01" required>
-
                 <label for="transactionCategory">Categoria:</label>
                 <select id="transactionCategory" required>
-                    </select>
-
+                </select>
                 <button type="submit" id="saveTransactionBtn">Guardar Transação</button>
                 <input type="hidden" id="transactionId">
-                <input type="hidden" id="transactionTypeHidden"> </form>
+                <input type="hidden" id="transactionTypeHidden">
+            </form>
         </div>
     </div>
-
     
 </body>
 </html>

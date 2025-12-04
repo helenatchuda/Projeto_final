@@ -46,6 +46,14 @@ const userNameDisplay = document.getElementById('userName');
 const userEmailDisplay = document.getElementById('userEmail');
 const userAvatar = document.getElementById('userAvatar');
 
+// Elementos da página de relatórios
+const periodoRelatorio = document.getElementById('periodoRelatorio');
+const dataInicio = document.getElementById('dataInicio');
+const dataFim = document.getElementById('dataFim');
+const tipoTransacao = document.getElementById('tipoTransacao');
+const aplicarFiltros = document.getElementById('aplicarFiltros');
+const transacoesRelatorioBody = document.getElementById('transacoesRelatorioBody');
+
 // Variáveis da sidebar
 let sidebar, mainContent, openBtn, closeBtn;
 
@@ -152,6 +160,8 @@ function showPage(pageId, navId) {
         renderTransactions('income', 'receitasTableBody', 'totalReceitasMes', 'countReceitasMes', 'maiorReceita');
     } else if (pageId === 'page-categorias') {
         renderCategories();
+    } else if (pageId === 'page-relatorios') {
+        renderRelatorios();
     }
     
     // Fecha o menu lateral em telas menores
@@ -179,6 +189,10 @@ document.getElementById('receitasLink')?.addEventListener('click', (e) => {
 document.getElementById('categoryLink')?.addEventListener('click', (e) => {
     e.preventDefault();
     showPage('page-categorias', 'categoryLink');
+});
+document.getElementById('relatorioLink')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showPage('page-relatorios', 'relatorioLink');
 });
 
 // --- Renderização de Dados ---
@@ -298,6 +312,327 @@ function renderCategories() {
     if (incomeCategoriesList) {
         incomeCategories.forEach(c => incomeCategoriesList.appendChild(createCategoryListItem(c)));
     }
+}
+
+// --- Funções para Relatórios ---
+
+/**
+ * Renderiza a página de relatórios
+ */
+function renderRelatorios() {
+    // Configurar datas padrão
+    const hoje = new Date();
+    const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    
+    if (dataInicio) {
+        dataInicio.value = primeiroDiaMes.toISOString().split('T')[0];
+        // Definir data mínima e máxima
+        dataInicio.min = '2000-01-01';
+        dataInicio.max = hoje.toISOString().split('T')[0];
+    }
+    
+    if (dataFim) {
+        dataFim.value = hoje.toISOString().split('T')[0];
+        dataFim.min = '2000-01-01';
+        dataFim.max = hoje.toISOString().split('T')[0];
+    }
+    
+    // Mostrar/ocultar filtro de data personalizada
+    const filtroDataPersonalizada = document.getElementById('filtroDataPersonalizada');
+    if (filtroDataPersonalizada && periodoRelatorio) {
+        filtroDataPersonalizada.style.display = 
+            periodoRelatorio.value === 'personalizado' ? 'flex' : 'none';
+    }
+    
+    // Aplicar filtros iniciais
+    aplicarFiltrosRelatorio();
+}
+
+/**
+ * Aplica os filtros e gera o relatório
+ */
+function aplicarFiltrosRelatorio() {
+    if (!transacoesRelatorioBody) return;
+    
+    // Obter valores dos filtros
+    const periodo = periodoRelatorio ? periodoRelatorio.value : 'mes_atual';
+    const tipo = tipoTransacao ? tipoTransacao.value : 'todas';
+    
+    let dataInicioFiltro, dataFimFiltro;
+    
+    // Calcular datas baseadas no período selecionado
+    const hoje = new Date();
+    
+    switch (periodo) {
+        case 'mes_atual':
+            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+            break;
+        case 'mes_anterior':
+            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+            break;
+        case 'trimestre':
+            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
+            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+            break;
+        case 'semestre':
+            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1);
+            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+            break;
+        case 'ano':
+            dataInicioFiltro = new Date(hoje.getFullYear(), 0, 1);
+            dataFimFiltro = new Date(hoje.getFullYear(), 11, 31);
+            break;
+        case 'personalizado':
+            dataInicioFiltro = dataInicio && dataInicio.value ? 
+                new Date(dataInicio.value + 'T00:00:00') : 
+                new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+            dataFimFiltro = dataFim && dataFim.value ? 
+                new Date(dataFim.value + 'T23:59:59') : 
+                new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+            break;
+        default:
+            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    }
+    
+    // Ajustar data fim para incluir todo o dia
+    dataFimFiltro.setHours(23, 59, 59, 999);
+    
+    // Filtrar transações
+    let transacoesFiltradas = transactions.filter(t => {
+        const dataTransacao = new Date(t.date + 'T00:00:00');
+        return dataTransacao >= dataInicioFiltro && dataTransacao <= dataFimFiltro;
+    });
+    
+    // Filtrar por tipo
+    if (tipo === 'receitas') {
+        transacoesFiltradas = transacoesFiltradas.filter(t => t.type === 'income');
+    } else if (tipo === 'despesas') {
+        transacoesFiltradas = transacoesFiltradas.filter(t => t.type === 'expense');
+    }
+    
+    // Ordenar por data (mais recente primeiro)
+    transacoesFiltradas.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA; // Decrescente
+    });
+    
+    // Calcular totais
+    const totalReceitas = transacoesFiltradas
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.value, 0);
+    
+    const totalDespesas = transacoesFiltradas
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.value, 0);
+    
+    const totalMovimentado = totalReceitas + totalDespesas;
+    const saldo = totalReceitas - totalDespesas;
+    
+    // Atualizar estatísticas
+    setTextSafe('totalMovimentado', totalMovimentado.toFixed(2) + ' €');
+    setTextSafe('totalReceitasRelatorio', totalReceitas.toFixed(2) + ' €');
+    setTextSafe('totalDespesasRelatorio', totalDespesas.toFixed(2) + ' €');
+    setTextSafe('saldoFinalRelatorio', saldo.toFixed(2) + ' €');
+    
+    // Renderizar tabela
+    transacoesRelatorioBody.innerHTML = '';
+    
+    if (transacoesFiltradas.length === 0) {
+        transacoesRelatorioBody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #6c757d;">
+                    <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                    Nenhuma transação encontrada para o período selecionado
+                </td>
+            </tr>
+        `;
+    } else {
+        transacoesFiltradas.forEach(t => {
+            const tr = document.createElement('tr');
+            const typeColor = t.type === 'income' ? '#4caf50' : '#f44336';
+            const typeText = t.type === 'income' ? 'Receita' : 'Despesa';
+            const valorFormatado = t.value.toFixed(2).replace('.', ',');
+            
+            tr.innerHTML = `
+                <td>${t.date}</td>
+                <td style="color: ${typeColor}; font-weight: bold;">${typeText}</td>
+                <td>${t.description}</td>
+                <td>${t.category}</td>
+                <td style="font-weight: bold; color: ${typeColor}">${valorFormatado} €</td>
+            `;
+            transacoesRelatorioBody.appendChild(tr);
+        });
+    }
+    
+    // Gerar resumo por categoria
+    gerarResumoCategorias(transacoesFiltradas);
+    
+    // Atualizar gráficos de placeholder
+    atualizarPlaceholdersGraficos(transacoesFiltradas);
+}
+
+/**
+ * Gera resumo das transações por categoria
+ */
+function gerarResumoCategorias(transacoes) {
+    const resumoCategorias = document.getElementById('resumoCategorias');
+    if (!resumoCategorias) return;
+    
+    // Agrupar por categoria
+    const categoriasMap = {};
+    
+    transacoes.forEach(t => {
+        if (!categoriasMap[t.category]) {
+            const categoriaInfo = categories.find(c => c.name === t.category);
+            categoriasMap[t.category] = {
+                receitas: 0,
+                despesas: 0,
+                cor: categoriaInfo ? categoriaInfo.color : '#6a1b9a',
+                tipo: categoriaInfo ? categoriaInfo.type : 'expense'
+            };
+        }
+        
+        if (t.type === 'income') {
+            categoriasMap[t.category].receitas += t.value;
+        } else {
+            categoriasMap[t.category].despesas += t.value;
+        }
+    });
+    
+    // Calcular totais para porcentagens
+    const totalReceitas = transacoes.filter(t => t.type === 'income').reduce((sum, t) => sum + t.value, 0);
+    const totalDespesas = transacoes.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.value, 0);
+    const totalGeral = totalReceitas + totalDespesas;
+    
+    // Gerar HTML
+    let html = '';
+    
+    Object.entries(categoriasMap).forEach(([categoria, dados]) => {
+        const totalCategoria = dados.receitas + dados.despesas;
+        const porcentagem = totalGeral > 0 
+            ? ((totalCategoria / totalGeral) * 100).toFixed(1)
+            : 0;
+        
+        const tipoTexto = dados.tipo === 'income' ? 'Receita' : 'Despesa';
+        
+        html += `
+            <div class="categoria-item">
+                <div class="categoria-header">
+                    <span class="categoria-nome">${categoria}</span>
+                    <span class="categoria-valor">${totalCategoria.toFixed(2)} €</span>
+                </div>
+                <div class="categoria-bar">
+                    <div class="categoria-fill" style="width: ${Math.min(porcentagem, 100)}%; background-color: ${dados.cor};"></div>
+                </div>
+                <div class="categoria-info">
+                    <span>Receitas: ${dados.receitas.toFixed(2)} €</span>
+                    <span>Despesas: ${dados.despesas.toFixed(2)} €</span>
+                    <span>${porcentagem}% do total</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    if (html === '') {
+        html = '<p style="color: #6c757d; text-align: center; grid-column: 1 / -1;">Nenhuma categoria com transações no período</p>';
+    }
+    
+    resumoCategorias.innerHTML = html;
+}
+
+/**
+ * Atualiza os placeholders dos gráficos com informações básicas
+ */
+function atualizarPlaceholdersGraficos(transacoes) {
+    const graficoCategorias = document.getElementById('graficoCategorias');
+    const graficoEvolucao = document.getElementById('graficoEvolucao');
+    
+    if (graficoCategorias) {
+        if (transacoes.length > 0) {
+            graficoCategorias.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-chart-pie" style="font-size: 3rem; color: #6a1b9a; margin-bottom: 15px;"></i>
+                    <p>Gráfico de distribuição por categoria</p>
+                    <p style="font-size: 0.9em; color: #6c757d;">
+                        ${transacoes.length} transações analisadas
+                    </p>
+                </div>
+            `;
+        } else {
+            graficoCategorias.innerHTML = 'Gráfico de pizza por categoria';
+        }
+    }
+    
+    if (graficoEvolucao) {
+        if (transacoes.length > 0) {
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dec'];
+            const mesAtual = new Date().getMonth();
+            graficoEvolucao.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-chart-line" style="font-size: 3rem; color: #4caf50; margin-bottom: 15px;"></i>
+                    <p>Evolução mensal das transações</p>
+                    <p style="font-size: 0.9em; color: #6c757d;">
+                        Período: ${meses[mesAtual-2] || 'Out'} a ${meses[mesAtual] || 'Dez'}
+                    </p>
+                </div>
+            `;
+        } else {
+            graficoEvolucao.innerHTML = 'Gráfico de linha mensal';
+        }
+    }
+}
+
+/**
+ * Exporta relatório para PDF (simulação)
+ */
+function exportarRelatorioPDF() {
+    if (!currentUser) {
+        alert('Por favor, faça login primeiro!');
+        openModal('loginpopup');
+        return;
+    }
+    
+    // Simulação de exportação PDF
+    alert('Relatório exportado com sucesso! (Funcionalidade PDF em desenvolvimento)');
+    
+    // Em um sistema real, você usaria uma biblioteca como jsPDF
+    // Para já, podemos criar um CSV simples
+    exportarRelatorioCSV();
+}
+
+function exportarRelatorioCSV() {
+    let csv = 'Data;Tipo;Descrição;Categoria;Valor\n';
+    
+    const linhas = transacoesRelatorioBody.querySelectorAll('tr');
+    
+    if (linhas.length === 1 && linhas[0].cells.length === 1) {
+        alert('Não há dados para exportar!');
+        return;
+    }
+    
+    linhas.forEach(tr => {
+        if (tr.cells.length === 5) {
+            const cells = tr.cells;
+            const tipo = cells[1].textContent;
+            const valor = cells[4].textContent.replace(' €', '').replace(',', '.');
+            csv += `${cells[0].textContent};${tipo};"${cells[2].textContent}";${cells[3].textContent};${valor}\n`;
+        }
+    });
+    
+    // Criar blob e link de download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
 }
 
 // --- Lógica de Transações (CRUD) ---
@@ -805,5 +1140,45 @@ document.addEventListener('DOMContentLoaded', () => {
         transactionDate.value = today;
         transactionDate.min = '2000-01-01';
         transactionDate.max = today;
+    }
+    
+    // Event listeners para relatórios
+    if (aplicarFiltros) {
+        aplicarFiltros.addEventListener('click', aplicarFiltrosRelatorio);
+    }
+    
+    if (periodoRelatorio) {
+        periodoRelatorio.addEventListener('change', function() {
+            const filtroDataPersonalizada = document.getElementById('filtroDataPersonalizada');
+            if (filtroDataPersonalizada) {
+                filtroDataPersonalizada.style.display = 
+                    this.value === 'personalizado' ? 'flex' : 'none';
+            }
+        });
+    }
+    
+    const gerarRelatorioBtn = document.getElementById('gerarRelatorioBtn');
+    if (gerarRelatorioBtn) {
+        gerarRelatorioBtn.addEventListener('click', exportarRelatorioPDF);
+    }
+    
+    // Alternar entre login e registro
+    const goToLogin = document.getElementById('goToLogin');
+    const goToRegister = document.getElementById('goToRegister');
+    
+    if (goToLogin) {
+        goToLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeModal('registerpopup');
+            openModal('loginpopup');
+        });
+    }
+    
+    if (goToRegister) {
+        goToRegister.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeModal('loginpopup');
+            openModal('registerpopup');
+        });
     }
 });
