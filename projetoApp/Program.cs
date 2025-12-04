@@ -1,8 +1,11 @@
 // =========================================================
 // || 1. USINGS ESSENCIAIS DO FRAMEWORK ASP.NET CORE
 // =========================================================
-using Microsoft.AspNetCore.Builder; // ESSENCIAL para WebApplication.CreateBuilder
-using Microsoft.AspNetCore.Mvc;     // Para [FromBody] e [FromQuery]
+// =========================================================
+// || 1. USINGS ESSENCIAIS DO FRAMEWORK ASP.NET CORE
+// =========================================================
+using Microsoft.AspNetCore.Builder; 
+using Microsoft.AspNetCore.Mvc;  // CORRIGIDO: Necessário para usar [FromQuery]
 
 // =========================================================
 // || 2. USINGS DO PROJETO E SISTEMA
@@ -10,20 +13,16 @@ using Microsoft.AspNetCore.Mvc;     // Para [FromBody] e [FromQuery]
 using ProjetoApp.Controllers;
 using ProjetoApp.Classes;
 using ProjetoApp.Persistence;
+// NOVO: Usings para tipos e métodos de sistema
 using System.Linq; 
-using System.Collections.Generic; // Para KeyNotFoundException
-using System; // Para Guid, DateTime, Exception
+using System.Collections.Generic; 
+using System; 
+// NOVO: Usando o namespace onde estão os DTOs
+using ProjetoApp.DTOs; 
 
 
 // =========================================================
-// || 3. DEFINIÇÕES DE DTOs (Data Transfer Objects - Records)
-// =========================================================
-public record CategoriaRequest(string Nome);
-public record TransacaoRequest(decimal Valor, string Descricao, Guid CategoriaId);
-
-
-// =========================================================
-// || 4. CONFIGURAÇÃO BASE
+// || 3. CONFIGURAÇÃO BASE (TOP-LEVEL STATEMENTS)
 // =========================================================
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -37,11 +36,11 @@ var controllerUtilizadores = new UtilizadorController(gestorPersistencia);
 var controllerCategorias = new CategoriaController(gestorPersistencia);
 var controllerReceitas = new ReceitaController(gestorPersistencia, controllerCategorias); 
 var controllerDespesas = new DespesaController(gestorPersistencia, controllerCategorias);
-var controllerRelatorios = new RelatorioController(controllerCategorias); 
+var controllerRelatorios = new RelatorioController(controllerCategorias);
 
 
 // ===============================================
-// ||         ENDPOINT DE UTILIZADORES          ||
+// ||         ENDPOINT DE UTILIZADORES          ||
 // ===============================================
 
 app.MapGet("/api/utilizadores", () =>
@@ -89,7 +88,7 @@ app.MapPost("/utilizadores/logout", (string email) =>
 
 
 // ===============================================
-// ||         ENDPOINT DE CATEGORIAS            ||
+// ||         ENDPOINT DE CATEGORIAS            ||
 // ===============================================
 
 // Listar todas as categorias
@@ -99,7 +98,7 @@ app.MapGet("/api/categorias", () =>
 });
 
 // Criar nova categoria
-app.MapPost("/api/categorias/criar", ([FromBody] CategoriaRequest body) =>
+app.MapPost("/api/categorias/criar", (CategoriaRequest body) => 
 {
     try
     {
@@ -113,7 +112,7 @@ app.MapPost("/api/categorias/criar", ([FromBody] CategoriaRequest body) =>
 });
 
 // Editar categoria
-app.MapPut("/api/categorias/{id}/editar", (Guid id, [FromBody] CategoriaRequest body) =>
+app.MapPut("/api/categorias/{id}/editar", (Guid id, CategoriaRequest body) => 
 {
     try
     {
@@ -146,7 +145,7 @@ app.MapDelete("/api/categorias/{id}/eliminar", (Guid id) =>
 
 
 // ===============================================
-// ||           ENDPOINT DE RECEITAS            ||
+// ||           ENDPOINT DE RECEITAS            ||
 // ===============================================
 
 // Listar todas as receitas de um utilizador
@@ -159,7 +158,7 @@ app.MapGet("/api/{utilizadorId}/receitas", (Guid utilizadorId) =>
 });
 
 // Criar nova receita
-app.MapPost("/api/{utilizadorId}/receitas/criar", (Guid utilizadorId, [FromBody] TransacaoRequest body) =>
+app.MapPost("/api/{utilizadorId}/receitas/criar", (Guid utilizadorId, TransacaoRequest body) => 
 {
     var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Id == utilizadorId);
     if (utilizador == null) return Results.NotFound("Utilizador não encontrado.");
@@ -169,14 +168,18 @@ app.MapPost("/api/{utilizadorId}/receitas/criar", (Guid utilizadorId, [FromBody]
         var novaReceita = controllerReceitas.Criar(utilizador, body.Valor, body.Descricao, body.CategoriaId);
         return Results.Created($"/api/{utilizadorId}/receitas/{novaReceita.Id}", novaReceita);
     }
-    catch (Exception ex)
+    catch (KeyNotFoundException) // Categoria não encontrada
+    {
+        return Results.NotFound("Categoria não encontrada.");
+    }
+    catch (Exception ex) // Valor inválido, descrição vazia
     {
         return Results.BadRequest(ex.Message);
     }
 });
 
 // Editar receita
-app.MapPut("/api/{utilizadorId}/receitas/{receitaId}/editar", (Guid utilizadorId, Guid receitaId, [FromBody] TransacaoRequest body) =>
+app.MapPut("/api/{utilizadorId}/receitas/{receitaId}/editar", (Guid utilizadorId, Guid receitaId, TransacaoRequest body) => 
 {
     var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Id == utilizadorId);
     if (utilizador == null) return Results.NotFound("Utilizador não encontrado.");
@@ -186,9 +189,13 @@ app.MapPut("/api/{utilizadorId}/receitas/{receitaId}/editar", (Guid utilizadorId
         controllerReceitas.Editar(utilizador, receitaId, body.Valor, body.Descricao, body.CategoriaId);
         return Results.Ok(new { message = "Receita editada com sucesso." });
     }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(ex.Message); 
+    }
     catch (Exception ex)
     {
-        return Results.NotFound(ex.Message);
+        return Results.BadRequest(ex.Message); 
     }
 });
 
@@ -211,7 +218,7 @@ app.MapDelete("/api/{utilizadorId}/receitas/{receitaId}/eliminar", (Guid utiliza
 
 
 // ===============================================
-// ||           ENDPOINT DE DESPESAS            ||
+// ||           ENDPOINT DE DESPESAS            ||
 // ===============================================
 
 // Listar todas as despesas de um utilizador 
@@ -224,7 +231,7 @@ app.MapGet("/api/{utilizadorId}/despesas", (Guid utilizadorId) =>
 });
 
 // Criar nova despesa
-app.MapPost("/api/{utilizadorId}/despesas/criar", (Guid utilizadorId, [FromBody] TransacaoRequest body) =>
+app.MapPost("/api/{utilizadorId}/despesas/criar", (Guid utilizadorId, TransacaoRequest body) => 
 {
     var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Id == utilizadorId);
     if (utilizador == null) return Results.NotFound("Utilizador não encontrado.");
@@ -234,14 +241,18 @@ app.MapPost("/api/{utilizadorId}/despesas/criar", (Guid utilizadorId, [FromBody]
         var novaDespesa = controllerDespesas.Criar(utilizador, body.Valor, body.Descricao, body.CategoriaId);
         return Results.Created($"/api/{utilizadorId}/despesas/{novaDespesa.Id}", novaDespesa);
     }
-    catch (Exception ex)
+    catch (KeyNotFoundException) // Categoria não encontrada
+    {
+        return Results.NotFound("Categoria não encontrada.");
+    }
+    catch (Exception ex) // Valor inválido, descrição vazia
     {
         return Results.BadRequest(ex.Message);
     }
 });
 
 // Editar despesa
-app.MapPut("/api/{utilizadorId}/despesas/{despesaId}/editar", (Guid utilizadorId, Guid despesaId, [FromBody] TransacaoRequest body) =>
+app.MapPut("/api/{utilizadorId}/despesas/{despesaId}/editar", (Guid utilizadorId, Guid despesaId, TransacaoRequest body) => 
 {
     var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Id == utilizadorId);
     if (utilizador == null) return Results.NotFound("Utilizador não encontrado.");
@@ -251,9 +262,13 @@ app.MapPut("/api/{utilizadorId}/despesas/{despesaId}/editar", (Guid utilizadorId
         controllerDespesas.Editar(utilizador, despesaId, body.Valor, body.Descricao, body.CategoriaId);
         return Results.Ok(new { message = "Despesa editada com sucesso." });
     }
-    catch (Exception ex)
+    catch (KeyNotFoundException ex)
     {
         return Results.NotFound(ex.Message);
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(ex.Message);
     }
 });
 
@@ -276,7 +291,7 @@ app.MapDelete("/api/{utilizadorId}/despesas/{despesaId}/eliminar", (Guid utiliza
 
 
 // ===============================================
-// ||         ENDPOINT DE RELATÓRIOS            ||
+// ||         ENDPOINT DE RELATÓRIOS            ||
 // ===============================================
 
 /// Determina o saldo atual (total) do utilizador.
@@ -292,8 +307,8 @@ app.MapGet("/api/{utilizadorId}/relatorio/saldo", (Guid utilizadorId) =>
 /// Calcula o total de receitas e despesas num período definido e o saldo nesse período.
 app.MapGet("/api/{utilizadorId}/relatorio/totais-por-periodo", (
     Guid utilizadorId, 
-    [FromQuery] DateTime? inicio,
-    [FromQuery] DateTime? fim)     
+    [FromQuery] DateTime? inicio, 
+    [FromQuery] DateTime? fim)     
     =>
 {
     var utilizador = controllerUtilizadores.Listar().FirstOrDefault(u => u.Id == utilizadorId);
