@@ -328,7 +328,7 @@ app.MapGet("/api/{utilizadorId}/relatorio/totais-por-periodo", (
     });
 });
 
-/// Lista as transações agrupadas por categoria, incluindo totais e saldo por categoria, num período opcional.
+/// Lista as transações agrupadas por categoria, incluindo totais e saldo por categoria, num período opcional
 app.MapGet("/api/{utilizadorId}/relatorio/por-categoria", (
     Guid utilizadorId,
     [FromQuery] DateTime? inicio,
