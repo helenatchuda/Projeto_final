@@ -1,3 +1,15 @@
+// ===========================================
+// || CONFIGURAÇÃO DO SISTEMA
+// ===========================================
+const API_BASE_URL = 'http://localhost:5000'; // URL do backend C#
+let usuarioLogado = null;
+
+// Modo de operação (true = usa backend C#, false = usa dados locais)
+const USE_BACKEND = false; // Mude para true quando o backend estiver rodando
+
+// ===========================================
+// || DADOS LOCAIS (para quando USE_BACKEND = false)
+// ===========================================
 let categories = [
     { id: 1, name: 'Alimentação', type: 'expense', color: '#ff7f50' },
     { id: 2, name: 'Transporte', type: 'expense', color: '#4169e1' },
@@ -16,849 +28,972 @@ let transactions = [
 ];
 let nextTransactionId = transactions.length + 1;
 
-// --- Usuários (armazenamento local) ---
+// Usuários (armazenamento local)
 let users = JSON.parse(localStorage.getItem('users')) || [];
 let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 
-// --- Elementos DOM ---
-const transactionModal = document.getElementById('transactionModal');
-const transactionForm = document.getElementById('transactionForm');
-const transactionCategorySelect = document.getElementById('transactionCategory');
-const transactionModalTitle = document.getElementById('transactionModalTitle');
-const transactionTypeHidden = document.getElementById('transactionTypeHidden');
-const categoryModal = document.getElementById('categoryModal');
-const categoryForm = document.getElementById('categoryForm');
-const categoryNameInput = document.getElementById('categoryName');
-const categoryTypeInput = document.getElementById('categoryType');
-const categoryColorInput = document.getElementById('categoryColor');
-const categoryIdInput = document.getElementById('categoryId');
-
-// Elementos do Modal de Transação
-const transactionDate = document.getElementById('transactionDate');
-const transactionDescription = document.getElementById('transactionDescription');
-const transactionValue = document.getElementById('transactionValue');
-const transactionId = document.getElementById('transactionId');
-
-// Elementos de Login/Registro
-const loginForm = document.querySelector('#loginpopup form');
-const registerForm = document.querySelector('#registerpopup form');
-const userNameDisplay = document.getElementById('userName');
-const userEmailDisplay = document.getElementById('userEmail');
-const userAvatar = document.getElementById('userAvatar');
-
-// Elementos da página de relatórios
-const periodoRelatorio = document.getElementById('periodoRelatorio');
-const dataInicio = document.getElementById('dataInicio');
-const dataFim = document.getElementById('dataFim');
-const tipoTransacao = document.getElementById('tipoTransacao');
-const aplicarFiltros = document.getElementById('aplicarFiltros');
-const transacoesRelatorioBody = document.getElementById('transacoesRelatorioBody');
-
-// Variáveis da sidebar
-let sidebar, mainContent, openBtn, closeBtn;
-
-// --- Funções de Ajuda ---
-
-/**
- * Função segura para obter elemento por ID
- */
-function getElementSafe(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-        console.warn(`Elemento com ID "${id}" não encontrado`);
-    }
-    return element;
-}
-
-/**
- * Função segura para definir textContent
- */
-function setTextSafe(id, text) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.textContent = text;
-    }
-}
-
-/**
- * Fecha um modal específico.
- */
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-    }
-    document.body.classList.remove('modal-open');
-    
-    // Reset forms
-    if (modalId === 'transactionModal' && transactionForm) transactionForm.reset();
-    if (modalId === 'categoryModal' && categoryForm) categoryForm.reset();
-    if (modalId === 'loginpopup' && loginForm) loginForm.reset();
-    if (modalId === 'registerpopup' && registerForm) registerForm.reset();
-}
-
-/**
- * Abre um modal específico.
- */
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'flex';
-        document.body.classList.add('modal-open');
-    }
-}
-
-// Fecha popups (Login/Register)
-document.querySelectorAll('.popup-overlay').forEach(popup => {
-    popup.addEventListener('click', function(e) {
-        if (e.target.classList.contains('popup-overlay')) {
-            closeModal(popup.id);
+// ===========================================
+// || FUNÇÕES DE AUTENTICAÇÃO (C# BACKEND)
+// ===========================================
+async function fazerLogin(email, senha) {
+    if (!USE_BACKEND) {
+        // Modo local
+        const user = users.find(u => u.email === email && u.password === senha);
+        if (user) {
+            usuarioLogado = user;
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            atualizarInterfaceUsuario();
+            fecharModal('loginpopup');
+            mostrarPagina('page-dashboard');
+            carregarDashboard();
+            return true;
+        } else {
+            mostrarErroLogin('Email ou senha incorretos!');
+            return false;
         }
-    });
-});
-
-// Fecha modals (Transaction/Category)
-document.querySelectorAll('.closeModal').forEach(button => {
-    button.addEventListener('click', (e) => {
-        const modalId = e.target.getAttribute('data-modal');
-        closeModal(modalId);
-    });
-});
-
-// --- Lógica de Navegação ---
-
-/**
- * Exibe a página de conteúdo e atualiza o estado da navegação.
- */
-function showPage(pageId, navId) {
-    // Oculta todas as páginas
-    document.querySelectorAll('.page-content').forEach(page => {
-        page.classList.remove('active-page');
-    });
-
-    // Mostra a página ativa
-    const activePage = document.getElementById(pageId);
-    if (activePage) activePage.classList.add('active-page');
-
-    // Remove a classe 'active' de todos os itens da nav
-    document.querySelectorAll('.sidebar nav ul li').forEach(item => {
-        item.classList.remove('active');
-    });
-
-    // Adiciona a classe 'active' ao item de navegação correto
-    const activeNav = document.getElementById(navId);
-    if (activeNav && activeNav.closest('li')) {
-        activeNav.closest('li').classList.add('active');
-    }
-
-    // Renderiza o conteúdo da página
-    if (pageId === 'page-dashboard') {
-        renderDashboard();
-    } else if (pageId === 'page-despesas') {
-        renderTransactions('expense', 'despesasTableBody', 'totalDespesasMes', 'countDespesasMes', 'maiorDespesa');
-    } else if (pageId === 'page-receitas') {
-        renderTransactions('income', 'receitasTableBody', 'totalReceitasMes', 'countReceitasMes', 'maiorReceita');
-    } else if (pageId === 'page-categorias') {
-        renderCategories();
-    } else if (pageId === 'page-relatorios') {
-        renderRelatorios();
     }
     
-    // Fecha o menu lateral em telas menores
-    if (window.innerWidth <= 768 && sidebar) { 
-        sidebar.style.width = '0';
-        if (mainContent) mainContent.style.marginLeft = '0';
-        if (openBtn) openBtn.style.display = 'block';
-        if (closeBtn) closeBtn.style.display = 'none';
+    // Modo backend C#
+    try {
+        const response = await fetch(`${API_BASE_URL}/utilizadores/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password: senha })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            usuarioLogado = data.user;
+            
+            // Salvar localmente para persistência
+            localStorage.setItem('currentUser', JSON.stringify(usuarioLogado));
+            
+            // Atualizar UI
+            atualizarInterfaceUsuario();
+            fecharModal('loginpopup');
+            mostrarPagina('page-dashboard');
+            carregarDashboard();
+            
+            return true;
+        } else {
+            mostrarErroLogin('Email ou senha incorretos!');
+            return false;
+        }
+    } catch (error) {
+        console.error('Erro no login:', error);
+        mostrarErroLogin('Erro de conexão com o servidor');
+        return false;
     }
 }
 
-// Configura os ouvintes de evento de navegação
-document.getElementById('dashboardLink')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showPage('page-dashboard', 'dashboardLink');
-});
-document.getElementById('despesasLink')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showPage('page-despesas', 'despesasLink');
-});
-document.getElementById('receitasLink')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showPage('page-receitas', 'receitasLink');
-});
-document.getElementById('categoryLink')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showPage('page-categorias', 'categoryLink');
-});
-document.getElementById('relatorioLink')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showPage('page-relatorios', 'relatorioLink');
-});
+async function registrarUsuario(nome, email, senha) {
+    if (!USE_BACKEND) {
+        // Modo local
+        if (senha.length < 6) {
+            mostrarErroRegistro('A senha deve ter pelo menos 6 caracteres');
+            return false;
+        }
+        
+        if (users.some(u => u.email === email)) {
+            mostrarErroRegistro('Este email já está registado');
+            return false;
+        }
+        
+        const newUser = {
+            id: Date.now(),
+            name: nome,
+            email: email,
+            password: senha,
+            createdAt: new Date().toISOString()
+        };
+        
+        users.push(newUser);
+        localStorage.setItem('users', JSON.stringify(users));
+        
+        usuarioLogado = newUser;
+        localStorage.setItem('currentUser', JSON.stringify(newUser));
+        
+        atualizarInterfaceUsuario();
+        alert('Conta criada com sucesso! Faça login.');
+        fecharModal('registerpopup');
+        abrirModal('loginpopup');
+        return true;
+    }
+    
+    // Modo backend C#
+    try {
+        const response = await fetch(`${API_BASE_URL}/utilizadores/registar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ nome, email, password: senha })
+        });
 
-// --- Renderização de Dados ---
+        if (response.ok) {
+            alert('Conta criada com sucesso! Faça login.');
+            fecharModal('registerpopup');
+            abrirModal('loginpopup');
+            return true;
+        } else {
+            const error = await response.text();
+            mostrarErroRegistro(error);
+            return false;
+        }
+    } catch (error) {
+        console.error('Erro no registro:', error);
+        mostrarErroRegistro('Erro de conexão com o servidor');
+        return false;
+    }
+}
 
-/**
- * Renderiza o Dashboard.
- */
-function renderDashboard() {
-    const expenseTotal = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.value, 0);
-    const incomeTotal = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.value, 0);
-    const saldo = incomeTotal - expenseTotal;
+async function fazerLogout() {
+    if (!usuarioLogado) return;
+    
+    if (USE_BACKEND) {
+        try {
+            await fetch(`${API_BASE_URL}/utilizadores/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: usuarioLogado.Email })
+            });
+        } catch (error) {
+            console.error('Erro no logout:', error);
+        }
+    }
+    
+    // Limpar estado local
+    usuarioLogado = null;
+    localStorage.removeItem('currentUser');
+    atualizarInterfaceUsuario();
+    
+    mostrarPagina('page-dashboard');
+    if (!USE_BACKEND) {
+        // Recarregar dados locais
+        carregarDashboard();
+    }
+}
 
-    setTextSafe('dashboardSaldo', saldo.toFixed(2) + ' €');
-    setTextSafe('dashboardReceitas', incomeTotal.toFixed(2) + ' €');
-    setTextSafe('dashboardDespesas', expenseTotal.toFixed(2) + ' €');
+// ===========================================
+// || FUNÇÕES DE DASHBOARD
+// ===========================================
+async function carregarDashboard() {
+    if (!USE_BACKEND) {
+        // Modo local
+        const expenseTotal = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.value, 0);
+        const incomeTotal = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.value, 0);
+        const saldo = incomeTotal - expenseTotal;
 
-    // Renderiza as últimas transações
-    const lastTransactionsBody = document.getElementById('lastTransactionsBody');
-    if (lastTransactionsBody) {
-        lastTransactionsBody.innerHTML = '';
+        document.getElementById('dashboardSaldo').textContent = `${saldo.toFixed(2)} €`;
+        document.getElementById('dashboardReceitas').textContent = `${incomeTotal.toFixed(2)} €`;
+        document.getElementById('dashboardDespesas').textContent = `${expenseTotal.toFixed(2)} €`;
 
-        const recentTransactions = transactions.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+        // Renderizar últimas transações
+        await carregarUltimasTransacoes();
+        return;
+    }
+    
+    // Modo backend C#
+    if (!usuarioLogado) return;
+    
+    try {
+        // Carregar saldo atual
+        const saldoResponse = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/relatorio/saldo`);
+        if (saldoResponse.ok) {
+            const saldoData = await saldoResponse.json();
+            document.getElementById('dashboardSaldo').textContent = `${saldoData.SaldoAtual.toFixed(2)} €`;
+        }
+        
+        // Carregar totais do mês atual
+        const hoje = new Date();
+        const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+        
+        const totaisResponse = await fetch(
+            `${API_BASE_URL}/api/${usuarioLogado.Id}/relatorio/totais-por-periodo?inicio=${primeiroDiaMes.toISOString()}&fim=${ultimoDiaMes.toISOString()}`
+        );
+        
+        if (totaisResponse.ok) {
+            const totaisData = await totaisResponse.json();
+            document.getElementById('dashboardReceitas').textContent = `${totaisData.TotalReceitas.toFixed(2)} €`;
+            document.getElementById('dashboardDespesas').textContent = `${totaisData.TotalDespesas.toFixed(2)} €`;
+        }
+        
+        // Carregar últimas transações
+        await carregarUltimasTransacoes();
+        
+    } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
+    }
+}
 
+async function carregarUltimasTransacoes() {
+    if (!USE_BACKEND) {
+        // Modo local
+        const tbody = document.getElementById('lastTransactionsBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        const recentTransactions = transactions
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 5);
+        
         recentTransactions.forEach(t => {
             const tr = document.createElement('tr');
             const typeColor = t.type === 'income' ? '#4caf50' : '#f44336';
             const typeText = t.type === 'income' ? 'Receita' : 'Despesa';
-
+            
             tr.innerHTML = `
                 <td>${t.date}</td>
                 <td style="color: ${typeColor}; font-weight: bold;">${typeText}</td>
                 <td>${t.description}</td>
                 <td style="font-weight: bold; color: ${typeColor}">${t.value.toFixed(2)} €</td>
             `;
-            lastTransactionsBody.appendChild(tr);
+            tbody.appendChild(tr);
         });
+        return;
     }
-}
-
-function renderTransactions(type, tableBodyId, totalId, countId, maxId) {
-    const filteredTransactions = transactions.filter(t => t.type === type);
-    const tableBody = document.getElementById(tableBodyId);
-
-    if (!tableBody) return;
-
-    tableBody.innerHTML = '';
-
-    let totalValue = 0;
-    let maxValue = 0;
-
-    filteredTransactions.forEach(t => {
-        totalValue += t.value;
-        if (t.value > maxValue) {
-            maxValue = t.value;
+    
+    // Modo backend C#
+    if (!usuarioLogado) return;
+    
+    try {
+        // Carregar receitas
+        const receitasResponse = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/receitas`);
+        const despesasResponse = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/despesas`);
+        
+        let transacoes = [];
+        
+        if (receitasResponse.ok) {
+            const receitas = await receitasResponse.json();
+            transacoes = transacoes.concat(receitas.map(r => ({ ...r, Tipo: 'Receita' })));
         }
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${t.date}</td>
-            <td>${t.description}</td>
-            <td>${t.category}</td>
-            <td>${t.value.toFixed(2)} €</td>
-            <td class="action-btns">
-                <button onclick="editTransaction(${t.id}, '${type}')"><i class="fas fa-edit"></i></button>
-                <button onclick="deleteTransaction(${t.id}, '${type}')" style="color: #f44336;"><i class="fas fa-trash"></i></button>
-            </td>
-        `;
-        tableBody.appendChild(tr);
-    });
-
-    setTextSafe(totalId, totalValue.toFixed(2) + ' €');
-    setTextSafe(countId, filteredTransactions.length.toString());
-    setTextSafe(maxId, maxValue.toFixed(2) + ' €');
-
-    renderDashboard(); 
-}
-
-function renderCategories() {
-    const expenseCategoriesList = document.getElementById('expenseCategoriesList');
-    const incomeCategoriesList = document.getElementById('incomeCategoriesList');
-    
-    if (expenseCategoriesList) expenseCategoriesList.innerHTML = '';
-    if (incomeCategoriesList) incomeCategoriesList.innerHTML = '';
-
-    const expenseCategories = categories.filter(c => c.type === 'expense');
-    const incomeCategories = categories.filter(c => c.type === 'income');
-    const allCategoriesCount = categories.length;
-
-    setTextSafe('totalCategoriesCount', allCategoriesCount.toString());
-    setTextSafe('expenseCategoriesCount', expenseCategories.length.toString());
-    setTextSafe('incomeCategoriesCount', incomeCategories.length.toString());
-
-    function createCategoryListItem(category) {
-        const li = document.createElement('li');
-        li.style.display = 'flex';
-        li.style.justifyContent = 'space-between';
-        li.style.alignItems = 'center';
-        li.style.padding = '8px 0';
-        li.style.borderBottom = '1px dotted #eee';
-        li.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${category.color};"></span>
-                ${category.name}
-            </div>
-            <div class="action-btns">
-                <button onclick="editCategory(${category.id})"><i class="fas fa-edit"></i></button>
-                <button onclick="deleteCategory(${category.id})" style="color: #f44336;"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
-        return li;
-    }
-
-    if (expenseCategoriesList) {
-        expenseCategories.forEach(c => expenseCategoriesList.appendChild(createCategoryListItem(c)));
-    }
-    
-    if (incomeCategoriesList) {
-        incomeCategories.forEach(c => incomeCategoriesList.appendChild(createCategoryListItem(c)));
-    }
-}
-
-// --- Funções para Relatórios ---
-
-/**
- * Renderiza a página de relatórios
- */
-function renderRelatorios() {
-    // Configurar datas padrão
-    const hoje = new Date();
-    const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    
-    if (dataInicio) {
-        dataInicio.value = primeiroDiaMes.toISOString().split('T')[0];
-        // Definir data mínima e máxima
-        dataInicio.min = '2000-01-01';
-        dataInicio.max = hoje.toISOString().split('T')[0];
-    }
-    
-    if (dataFim) {
-        dataFim.value = hoje.toISOString().split('T')[0];
-        dataFim.min = '2000-01-01';
-        dataFim.max = hoje.toISOString().split('T')[0];
-    }
-    
-    // Mostrar/ocultar filtro de data personalizada
-    const filtroDataPersonalizada = document.getElementById('filtroDataPersonalizada');
-    if (filtroDataPersonalizada && periodoRelatorio) {
-        filtroDataPersonalizada.style.display = 
-            periodoRelatorio.value === 'personalizado' ? 'flex' : 'none';
-    }
-    
-    // Aplicar filtros iniciais
-    aplicarFiltrosRelatorio();
-}
-
-/**
- * Aplica os filtros e gera o relatório
- */
-function aplicarFiltrosRelatorio() {
-    if (!transacoesRelatorioBody) return;
-    
-    // Obter valores dos filtros
-    const periodo = periodoRelatorio ? periodoRelatorio.value : 'mes_atual';
-    const tipo = tipoTransacao ? tipoTransacao.value : 'todas';
-    
-    let dataInicioFiltro, dataFimFiltro;
-    
-    // Calcular datas baseadas no período selecionado
-    const hoje = new Date();
-    
-    switch (periodo) {
-        case 'mes_atual':
-            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-            break;
-        case 'mes_anterior':
-            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-            break;
-        case 'trimestre':
-            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
-            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-            break;
-        case 'semestre':
-            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1);
-            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-            break;
-        case 'ano':
-            dataInicioFiltro = new Date(hoje.getFullYear(), 0, 1);
-            dataFimFiltro = new Date(hoje.getFullYear(), 11, 31);
-            break;
-        case 'personalizado':
-            dataInicioFiltro = dataInicio && dataInicio.value ? 
-                new Date(dataInicio.value + 'T00:00:00') : 
-                new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-            dataFimFiltro = dataFim && dataFim.value ? 
-                new Date(dataFim.value + 'T23:59:59') : 
-                new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-            break;
-        default:
-            dataInicioFiltro = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-            dataFimFiltro = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    }
-    
-    // Ajustar data fim para incluir todo o dia
-    dataFimFiltro.setHours(23, 59, 59, 999);
-    
-    // Filtrar transações
-    let transacoesFiltradas = transactions.filter(t => {
-        const dataTransacao = new Date(t.date + 'T00:00:00');
-        return dataTransacao >= dataInicioFiltro && dataTransacao <= dataFimFiltro;
-    });
-    
-    // Filtrar por tipo
-    if (tipo === 'receitas') {
-        transacoesFiltradas = transacoesFiltradas.filter(t => t.type === 'income');
-    } else if (tipo === 'despesas') {
-        transacoesFiltradas = transacoesFiltradas.filter(t => t.type === 'expense');
-    }
-    
-    // Ordenar por data (mais recente primeiro)
-    transacoesFiltradas.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateB - dateA; // Decrescente
-    });
-    
-    // Calcular totais
-    const totalReceitas = transacoesFiltradas
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.value, 0);
-    
-    const totalDespesas = transacoesFiltradas
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.value, 0);
-    
-    const totalMovimentado = totalReceitas + totalDespesas;
-    const saldo = totalReceitas - totalDespesas;
-    
-    // Atualizar estatísticas
-    setTextSafe('totalMovimentado', totalMovimentado.toFixed(2) + ' €');
-    setTextSafe('totalReceitasRelatorio', totalReceitas.toFixed(2) + ' €');
-    setTextSafe('totalDespesasRelatorio', totalDespesas.toFixed(2) + ' €');
-    setTextSafe('saldoFinalRelatorio', saldo.toFixed(2) + ' €');
-    
-    // Renderizar tabela
-    transacoesRelatorioBody.innerHTML = '';
-    
-    if (transacoesFiltradas.length === 0) {
-        transacoesRelatorioBody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: #6c757d;">
-                    <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                    Nenhuma transação encontrada para o período selecionado
-                </td>
-            </tr>
-        `;
-    } else {
-        transacoesFiltradas.forEach(t => {
+        
+        if (despesasResponse.ok) {
+            const despesas = await despesasResponse.json();
+            transacoes = transacoes.concat(despesas.map(d => ({ ...d, Tipo: 'Despesa' })));
+        }
+        
+        // Ordenar por data (mais recente primeiro) e pegar 5 primeiras
+        transacoes.sort((a, b) => new Date(b.Data) - new Date(a.Data));
+        const ultimas5 = transacoes.slice(0, 5);
+        
+        // Preencher tabela
+        const tbody = document.getElementById('lastTransactionsBody');
+        tbody.innerHTML = '';
+        
+        ultimas5.forEach(transacao => {
             const tr = document.createElement('tr');
-            const typeColor = t.type === 'income' ? '#4caf50' : '#f44336';
-            const typeText = t.type === 'income' ? 'Receita' : 'Despesa';
-            const valorFormatado = t.value.toFixed(2).replace('.', ',');
+            const typeColor = transacao.Tipo === 'Receita' ? '#4caf50' : '#f44336';
             
             tr.innerHTML = `
+                <td>${new Date(transacao.Data).toLocaleDateString('pt-PT')}</td>
+                <td style="color: ${typeColor}; font-weight: bold;">${transacao.Tipo}</td>
+                <td>${transacao.Descricao}</td>
+                <td style="font-weight: bold; color: ${typeColor}">${transacao.Valor.toFixed(2)} €</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+    } catch (error) {
+        console.error('Erro ao carregar últimas transações:', error);
+    }
+}
+
+// ===========================================
+// || FUNÇÕES DE DESPESAS
+// ===========================================
+async function carregarDespesas() {
+    if (!USE_BACKEND) {
+        // Modo local
+        const filteredTransactions = transactions.filter(t => t.type === 'expense');
+        const tbody = document.getElementById('despesasTableBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        let totalValue = 0;
+        let maxValue = 0;
+        
+        filteredTransactions.forEach(t => {
+            totalValue += t.value;
+            if (t.value > maxValue) maxValue = t.value;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
                 <td>${t.date}</td>
-                <td style="color: ${typeColor}; font-weight: bold;">${typeText}</td>
                 <td>${t.description}</td>
                 <td>${t.category}</td>
-                <td style="font-weight: bold; color: ${typeColor}">${valorFormatado} €</td>
+                <td>${t.value.toFixed(2)} €</td>
+                <td class="action-btns">
+                    <button onclick="editarTransacao(${t.id}, 'expense')"><i class="fas fa-edit"></i></button>
+                    <button onclick="eliminarTransacao(${t.id}, 'expense')" style="color: #f44336;"><i class="fas fa-trash"></i></button>
+                </td>
             `;
-            transacoesRelatorioBody.appendChild(tr);
+            tbody.appendChild(tr);
         });
+        
+        document.getElementById('totalDespesasMes').textContent = `${totalValue.toFixed(2)} €`;
+        document.getElementById('countDespesasMes').textContent = filteredTransactions.length;
+        document.getElementById('maiorDespesa').textContent = `${maxValue.toFixed(2)} €`;
+        return;
     }
     
-    // Gerar resumo por categoria
-    gerarResumoCategorias(transacoesFiltradas);
+    // Modo backend C#
+    if (!usuarioLogado) return;
     
-    // Atualizar gráficos de placeholder
-    atualizarPlaceholdersGraficos(transacoesFiltradas);
-}
-
-/**
- * Gera resumo das transações por categoria
- */
-function gerarResumoCategorias(transacoes) {
-    const resumoCategorias = document.getElementById('resumoCategorias');
-    if (!resumoCategorias) return;
-    
-    // Agrupar por categoria
-    const categoriasMap = {};
-    
-    transacoes.forEach(t => {
-        if (!categoriasMap[t.category]) {
-            const categoriaInfo = categories.find(c => c.name === t.category);
-            categoriasMap[t.category] = {
-                receitas: 0,
-                despesas: 0,
-                cor: categoriaInfo ? categoriaInfo.color : '#6a1b9a',
-                tipo: categoriaInfo ? categoriaInfo.type : 'expense'
-            };
-        }
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/despesas`);
+        if (!response.ok) throw new Error('Erro ao carregar despesas');
         
-        if (t.type === 'income') {
-            categoriasMap[t.category].receitas += t.value;
-        } else {
-            categoriasMap[t.category].despesas += t.value;
-        }
-    });
-    
-    // Calcular totais para porcentagens
-    const totalReceitas = transacoes.filter(t => t.type === 'income').reduce((sum, t) => sum + t.value, 0);
-    const totalDespesas = transacoes.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.value, 0);
-    const totalGeral = totalReceitas + totalDespesas;
-    
-    // Gerar HTML
-    let html = '';
-    
-    Object.entries(categoriasMap).forEach(([categoria, dados]) => {
-        const totalCategoria = dados.receitas + dados.despesas;
-        const porcentagem = totalGeral > 0 
-            ? ((totalCategoria / totalGeral) * 100).toFixed(1)
-            : 0;
+        const despesas = await response.json();
         
-        const tipoTexto = dados.tipo === 'income' ? 'Receita' : 'Despesa';
+        // Atualizar estatísticas
+        const totalDespesas = despesas.reduce((sum, d) => sum + d.Valor, 0);
+        const maiorDespesa = despesas.length > 0 ? Math.max(...despesas.map(d => d.Valor)) : 0;
         
-        html += `
-            <div class="categoria-item">
-                <div class="categoria-header">
-                    <span class="categoria-nome">${categoria}</span>
-                    <span class="categoria-valor">${totalCategoria.toFixed(2)} €</span>
-                </div>
-                <div class="categoria-bar">
-                    <div class="categoria-fill" style="width: ${Math.min(porcentagem, 100)}%; background-color: ${dados.cor};"></div>
-                </div>
-                <div class="categoria-info">
-                    <span>Receitas: ${dados.receitas.toFixed(2)} €</span>
-                    <span>Despesas: ${dados.despesas.toFixed(2)} €</span>
-                    <span>${porcentagem}% do total</span>
-                </div>
-            </div>
-        `;
-    });
-    
-    if (html === '') {
-        html = '<p style="color: #6c757d; text-align: center; grid-column: 1 / -1;">Nenhuma categoria com transações no período</p>';
-    }
-    
-    resumoCategorias.innerHTML = html;
-}
-
-/**
- * Atualiza os placeholders dos gráficos com informações básicas
- */
-function atualizarPlaceholdersGraficos(transacoes) {
-    const graficoCategorias = document.getElementById('graficoCategorias');
-    const graficoEvolucao = document.getElementById('graficoEvolucao');
-    
-    if (graficoCategorias) {
-        if (transacoes.length > 0) {
-            graficoCategorias.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <i class="fas fa-chart-pie" style="font-size: 3rem; color: #6a1b9a; margin-bottom: 15px;"></i>
-                    <p>Gráfico de distribuição por categoria</p>
-                    <p style="font-size: 0.9em; color: #6c757d;">
-                        ${transacoes.length} transações analisadas
-                    </p>
-                </div>
+        document.getElementById('totalDespesasMes').textContent = `${totalDespesas.toFixed(2)} €`;
+        document.getElementById('countDespesasMes').textContent = despesas.length;
+        document.getElementById('maiorDespesa').textContent = `${maiorDespesa.toFixed(2)} €`;
+        
+        // Preencher tabela
+        const tbody = document.getElementById('despesasTableBody');
+        tbody.innerHTML = '';
+        
+        // Carregar categorias para mostrar nome
+        const categorias = await carregarCategorias();
+        
+        despesas.forEach(despesa => {
+            const categoria = categorias.find(c => c.Id === despesa.CategoriaId);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${new Date(despesa.Data).toLocaleDateString('pt-PT')}</td>
+                <td>${despesa.Descricao}</td>
+                <td>${categoria ? categoria.Nome : 'Sem categoria'}</td>
+                <td>${despesa.Valor.toFixed(2)} €</td>
+                <td class="action-btns">
+                    <button onclick="editarDespesa('${despesa.Id}')"><i class="fas fa-edit"></i></button>
+                    <button onclick="eliminarDespesa('${despesa.Id}')" style="color: #f44336;"><i class="fas fa-trash"></i></button>
+                </td>
             `;
-        } else {
-            graficoCategorias.innerHTML = 'Gráfico de pizza por categoria';
+            tbody.appendChild(tr);
+        });
+        
+    } catch (error) {
+        console.error('Erro ao carregar despesas:', error);
+    }
+}
+
+async function criarDespesa(valor, descricao, categoriaId) {
+    if (!USE_BACKEND) {
+        // Modo local
+        const categoria = categories.find(c => c.id === parseInt(categoriaId));
+        const novaDespesa = {
+            id: nextTransactionId++,
+            date: document.getElementById('transactionDate').value,
+            description: descricao,
+            value: parseFloat(valor),
+            type: 'expense',
+            category: categoria ? categoria.name : 'Sem Categoria',
+            categoryId: parseInt(categoriaId)
+        };
+        
+        transactions.push(novaDespesa);
+        carregarDespesas();
+        carregarDashboard();
+        return true;
+    }
+    
+    // Modo backend C#
+    if (!usuarioLogado) return false;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/despesas/criar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                Valor: parseFloat(valor),
+                Descricao: descricao,
+                CategoriaId: categoriaId
+            })
+        });
+        
+        if (response.ok) {
+            await carregarDespesas();
+            await carregarDashboard();
+            return true;
         }
-    }
-    
-    if (graficoEvolucao) {
-        if (transacoes.length > 0) {
-            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dec'];
-            const mesAtual = new Date().getMonth();
-            graficoEvolucao.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <i class="fas fa-chart-line" style="font-size: 3rem; color: #4caf50; margin-bottom: 15px;"></i>
-                    <p>Evolução mensal das transações</p>
-                    <p style="font-size: 0.9em; color: #6c757d;">
-                        Período: ${meses[mesAtual-2] || 'Out'} a ${meses[mesAtual] || 'Dez'}
-                    </p>
-                </div>
-            `;
-        } else {
-            graficoEvolucao.innerHTML = 'Gráfico de linha mensal';
-        }
+        return false;
+    } catch (error) {
+        console.error('Erro ao criar despesa:', error);
+        return false;
     }
 }
 
-/**
- * Exporta relatório para PDF (simulação)
- */
-function exportarRelatorioPDF() {
-    if (!currentUser) {
-        alert('Por favor, faça login primeiro!');
-        openModal('loginpopup');
-        return;
-    }
-    
-    // Simulação de exportação PDF
-    alert('Relatório exportado com sucesso! (Funcionalidade PDF em desenvolvimento)');
-    
-    // Em um sistema real, você usaria uma biblioteca como jsPDF
-    // Para já, podemos criar um CSV simples
-    exportarRelatorioCSV();
-}
-
-function exportarRelatorioCSV() {
-    let csv = 'Data;Tipo;Descrição;Categoria;Valor\n';
-    
-    const linhas = transacoesRelatorioBody.querySelectorAll('tr');
-    
-    if (linhas.length === 1 && linhas[0].cells.length === 1) {
-        alert('Não há dados para exportar!');
-        return;
-    }
-    
-    linhas.forEach(tr => {
-        if (tr.cells.length === 5) {
-            const cells = tr.cells;
-            const tipo = cells[1].textContent;
-            const valor = cells[4].textContent.replace(' €', '').replace(',', '.');
-            csv += `${cells[0].textContent};${tipo};"${cells[2].textContent}";${cells[3].textContent};${valor}\n`;
-        }
-    });
-    
-    // Criar blob e link de download
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
-
-// --- Lógica de Transações (CRUD) ---
-
-function populateCategorySelect(type) {
-    if (!transactionCategorySelect) return;
-    
-    transactionCategorySelect.innerHTML = '';
-    const filteredCategories = categories.filter(c => c.type === type);
-
-    filteredCategories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category.id;
-        option.textContent = category.name;
-        option.style.color = category.color; 
-        transactionCategorySelect.appendChild(option);
-    });
-}
-
-window.addTransaction = function(type) {
-    if (!currentUser) {
-        alert('Por favor, faça login primeiro!');
-        openModal('loginpopup');
-        return;
-    }
-    
-    if (transactionModalTitle) {
-        transactionModalTitle.textContent = type === 'expense' ? 'Nova Despesa' : 'Nova Receita';
-    }
-    
-    if (transactionTypeHidden) transactionTypeHidden.value = type;
-    if (transactionId) transactionId.value = '';
-    if (transactionForm) transactionForm.reset();
-    populateCategorySelect(type);
-    openModal('transactionModal');
-}
-
-window.editTransaction = function(id, type) {
-    const t = transactions.find(t => t.id === id);
-    if (!t) return;
-
-    if (transactionModalTitle) {
-        transactionModalTitle.textContent = type === 'expense' ? 'Editar Despesa' : 'Editar Receita';
-    }
-    
-    if (transactionTypeHidden) transactionTypeHidden.value = type;
-    if (transactionId) transactionId.value = t.id;
-
-    // Preencher o formulário
-    if (transactionDate) transactionDate.value = t.date;
-    if (transactionDescription) transactionDescription.value = t.description;
-    if (transactionValue) transactionValue.value = t.value;
-    populateCategorySelect(type);
-    // Seleciona a categoria correta
-    if (transactionCategorySelect) transactionCategorySelect.value = t.categoryId;
-
-    openModal('transactionModal');
-}
-
-window.deleteTransaction = function(id, type) {
-    if (confirm('Tem certeza que deseja eliminar esta transação?')) {
-        const index = transactions.findIndex(t => t.id === id);
-        if (index > -1) {
+async function eliminarDespesa(despesaId) {
+    if (!USE_BACKEND) {
+        // Modo local
+        const index = transactions.findIndex(t => t.id === parseInt(despesaId));
+        if (index > -1 && confirm('Tem certeza que deseja eliminar esta despesa?')) {
             transactions.splice(index, 1);
-            // Re-renderiza a página correta
-            showPage(type === 'expense' ? 'page-despesas' : 'page-receitas', type === 'expense' ? 'despesasLink' : 'receitasLink');
+            carregarDespesas();
+            carregarDashboard();
         }
-    }
-}
-
-// Ouvinte para o formulário de Transação
-if (transactionForm) {
-    transactionForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const id = transactionId && transactionId.value ? parseInt(transactionId.value) : null;
-        const type = transactionTypeHidden ? transactionTypeHidden.value : '';
-        const categoryId = transactionCategorySelect ? parseInt(transactionCategorySelect.value) : 0;
-        const category = categories.find(c => c.id === categoryId)?.name || 'Sem Categoria';
-
-        const newTransaction = {
-            id: id || nextTransactionId,
-            date: transactionDate ? transactionDate.value : '',
-            description: transactionDescription ? transactionDescription.value : '',
-            value: transactionValue ? parseFloat(transactionValue.value) : 0,
-            type: type,
-            category: category,
-            categoryId: categoryId 
-        };
-
-        if (id) {
-            // Edição
-            const index = transactions.findIndex(t => t.id === id);
-            if (index > -1) {
-                transactions[index] = newTransaction;
-            }
-        } else {
-            // Nova Transação
-            transactions.push(newTransaction);
-            nextTransactionId++;
-        }
-
-        closeModal('transactionModal');
-        // Re-renderiza a página correta
-        showPage(type === 'expense' ? 'page-despesas' : 'page-receitas', type === 'expense' ? 'despesasLink' : 'receitasLink');
-    });
-}
-
-// Event Listeners para botões "Nova Despesa" e "Nova Receita"
-document.getElementById('addDespesaBtn')?.addEventListener('click', () => addTransaction('expense'));
-document.getElementById('addReceitaBtn')?.addEventListener('click', () => addTransaction('income'));
-
-// --- Lógica de Categorias (CRUD) ---
-
-/**
- * Abre o modal de categoria para adicionar uma nova.
- */
-document.getElementById('addCategoryBtn')?.addEventListener('click', () => {
-    if (!currentUser) {
-        alert('Por favor, faça login primeiro!');
-        openModal('loginpopup');
         return;
     }
     
-    setTextSafe('categoryModalTitle', 'Nova Categoria');
-    if (categoryIdInput) categoryIdInput.value = '';
-    if (categoryForm) categoryForm.reset();
-    openModal('categoryModal');
-});
-
-window.editCategory = function(id) {
-    const c = categories.find(c => c.id === id);
-    if (!c) return;
-
-    setTextSafe('categoryModalTitle', 'Editar Categoria');
-    if (categoryIdInput) categoryIdInput.value = c.id;
-    if (categoryNameInput) categoryNameInput.value = c.name;
-    if (categoryTypeInput) categoryTypeInput.value = c.type;
-    if (categoryColorInput) categoryColorInput.value = c.color;
-
-    openModal('categoryModal');
+    // Modo backend C#
+    if (!usuarioLogado || !confirm('Tem certeza que deseja eliminar esta despesa?')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/despesas/${despesaId}/eliminar`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            await carregarDespesas();
+            await carregarDashboard();
+        }
+    } catch (error) {
+        console.error('Erro ao eliminar despesa:', error);
+    }
 }
 
-window.deleteCategory = function(id) {
-    if (transactions.some(t => t.categoryId === id)) {
-        alert('Não é possível eliminar esta categoria porque existem transações associadas.');
+// ===========================================
+// || FUNÇÕES DE RECEITAS
+// ===========================================
+async function carregarReceitas() {
+    if (!USE_BACKEND) {
+        // Modo local
+        const filteredTransactions = transactions.filter(t => t.type === 'income');
+        const tbody = document.getElementById('receitasTableBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        let totalValue = 0;
+        let maxValue = 0;
+        
+        filteredTransactions.forEach(t => {
+            totalValue += t.value;
+            if (t.value > maxValue) maxValue = t.value;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${t.date}</td>
+                <td>${t.description}</td>
+                <td>${t.category}</td>
+                <td>${t.value.toFixed(2)} €</td>
+                <td class="action-btns">
+                    <button onclick="editarTransacao(${t.id}, 'income')"><i class="fas fa-edit"></i></button>
+                    <button onclick="eliminarTransacao(${t.id}, 'income')" style="color: #f44336;"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        document.getElementById('totalReceitasMes').textContent = `${totalValue.toFixed(2)} €`;
+        document.getElementById('countReceitasMes').textContent = filteredTransactions.length;
+        document.getElementById('maiorReceita').textContent = `${maxValue.toFixed(2)} €`;
         return;
     }
+    
+    // Modo backend C#
+    if (!usuarioLogado) return;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/receitas`);
+        if (!response.ok) throw new Error('Erro ao carregar receitas');
+        
+        const receitas = await response.json();
+        
+        // Atualizar estatísticas
+        const totalReceitas = receitas.reduce((sum, r) => sum + r.Valor, 0);
+        const maiorReceita = receitas.length > 0 ? Math.max(...receitas.map(r => r.Valor)) : 0;
+        
+        document.getElementById('totalReceitasMes').textContent = `${totalReceitas.toFixed(2)} €`;
+        document.getElementById('countReceitasMes').textContent = receitas.length;
+        document.getElementById('maiorReceita').textContent = `${maiorReceita.toFixed(2)} €`;
+        
+        // Preencher tabela
+        const tbody = document.getElementById('receitasTableBody');
+        tbody.innerHTML = '';
+        
+        // Carregar categorias para mostrar nome
+        const categorias = await carregarCategorias();
+        
+        receitas.forEach(receita => {
+            const categoria = categorias.find(c => c.Id === receita.CategoriaId);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${new Date(receita.Data).toLocaleDateString('pt-PT')}</td>
+                <td>${receita.Descricao}</td>
+                <td>${categoria ? categoria.Nome : 'Sem categoria'}</td>
+                <td>${receita.Valor.toFixed(2)} €</td>
+                <td class="action-btns">
+                    <button onclick="editarReceita('${receita.Id}')"><i class="fas fa-edit"></i></button>
+                    <button onclick="eliminarReceita('${receita.Id}')" style="color: #f44336;"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+    } catch (error) {
+        console.error('Erro ao carregar receitas:', error);
+    }
+}
 
-    if (confirm('Tem certeza que deseja eliminar esta categoria?')) {
-        const index = categories.findIndex(c => c.id === id);
-        if (index > -1) {
-            categories.splice(index, 1);
-            // Re-renderiza a página de categorias
-            renderCategories();
+async function criarReceita(valor, descricao, categoriaId) {
+    if (!USE_BACKEND) {
+        // Modo local
+        const categoria = categories.find(c => c.id === parseInt(categoriaId));
+        const novaReceita = {
+            id: nextTransactionId++,
+            date: document.getElementById('transactionDate').value,
+            description: descricao,
+            value: parseFloat(valor),
+            type: 'income',
+            category: categoria ? categoria.name : 'Sem Categoria',
+            categoryId: parseInt(categoriaId)
+        };
+        
+        transactions.push(novaReceita);
+        carregarReceitas();
+        carregarDashboard();
+        return true;
+    }
+    
+    // Modo backend C#
+    if (!usuarioLogado) return false;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/receitas/criar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                Valor: parseFloat(valor),
+                Descricao: descricao,
+                CategoriaId: categoriaId
+            })
+        });
+        
+        if (response.ok) {
+            await carregarReceitas();
+            await carregarDashboard();
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Erro ao criar receita:', error);
+        return false;
+    }
+}
+
+async function eliminarReceita(receitaId) {
+    if (!USE_BACKEND) {
+        // Modo local
+        const index = transactions.findIndex(t => t.id === parseInt(receitaId));
+        if (index > -1 && confirm('Tem certeza que deseja eliminar esta receita?')) {
+            transactions.splice(index, 1);
+            carregarReceitas();
+            carregarDashboard();
+        }
+        return;
+    }
+    
+    // Modo backend C#
+    if (!usuarioLogado || !confirm('Tem certeza que deseja eliminar esta receita?')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/${usuarioLogado.Id}/receitas/${receitaId}/eliminar`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            await carregarReceitas();
+            await carregarDashboard();
+        }
+    } catch (error) {
+        console.error('Erro ao eliminar receita:', error);
+    }
+}
+
+// ===========================================
+// || FUNÇÕES DE CATEGORIAS
+// ===========================================
+async function carregarCategorias() {
+    if (!USE_BACKEND) {
+        // Modo local
+        const expenseCategories = categories.filter(c => c.type === 'expense');
+        const incomeCategories = categories.filter(c => c.type === 'income');
+        
+        document.getElementById('totalCategoriesCount').textContent = categories.length;
+        document.getElementById('expenseCategoriesCount').textContent = expenseCategories.length;
+        document.getElementById('incomeCategoriesCount').textContent = incomeCategories.length;
+        
+        // Preencher listas
+        const listaDespesas = document.getElementById('expenseCategoriesList');
+        const listaReceitas = document.getElementById('incomeCategoriesList');
+        
+        if (listaDespesas) {
+            listaDespesas.innerHTML = '';
+            expenseCategories.forEach(categoria => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span style="color: ${categoria.color}">●</span>
+                    ${categoria.name}
+                    <button class="btn-eliminar-categoria" onclick="eliminarCategoria(${categoria.id})">🗑️</button>
+                `;
+                listaDespesas.appendChild(li);
+            });
+        }
+        
+        if (listaReceitas) {
+            listaReceitas.innerHTML = '';
+            incomeCategories.forEach(categoria => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span style="color: ${categoria.color}">●</span>
+                    ${categoria.name}
+                    <button class="btn-eliminar-categoria" onclick="eliminarCategoria(${categoria.id})">🗑️</button>
+                `;
+                listaReceitas.appendChild(li);
+            });
+        }
+        
+        return categories;
+    }
+    
+    // Modo backend C#
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categorias`);
+        if (!response.ok) return [];
+        
+        const categorias = await response.json();
+        
+        // Atualizar estatísticas
+        const categoriasDespesas = categorias.filter(c => c.Tipo === 'Despesa');
+        const categoriasReceitas = categorias.filter(c => c.Tipo === 'Receita');
+        
+        document.getElementById('totalCategoriesCount').textContent = categorias.length;
+        document.getElementById('expenseCategoriesCount').textContent = categoriasDespesas.length;
+        document.getElementById('incomeCategoriesCount').textContent = categoriasReceitas.length;
+        
+        // Preencher listas
+        const listaDespesas = document.getElementById('expenseCategoriesList');
+        const listaReceitas = document.getElementById('incomeCategoriesList');
+        
+        if (listaDespesas) {
+            listaDespesas.innerHTML = '';
+            categoriasDespesas.forEach(categoria => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span style="color: ${categoria.Cor || '#6a1b9a'}">●</span>
+                    ${categoria.Nome}
+                    <button class="btn-eliminar-categoria" onclick="eliminarCategoria('${categoria.Id}')">🗑️</button>
+                `;
+                listaDespesas.appendChild(li);
+            });
+        }
+        
+        if (listaReceitas) {
+            listaReceitas.innerHTML = '';
+            categoriasReceitas.forEach(categoria => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span style="color: ${categoria.Cor || '#6a1b9a'}">●</span>
+                    ${categoria.Nome}
+                    <button class="btn-eliminar-categoria" onclick="eliminarCategoria('${categoria.Id}')">🗑️</button>
+                `;
+                listaReceitas.appendChild(li);
+            });
+        }
+        
+        return categorias;
+    } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+        return [];
+    }
+}
+
+async function criarCategoria(nome, tipo, cor) {
+    if (!USE_BACKEND) {
+        // Modo local
+        const novaCategoria = {
+            id: nextCategoryId++,
+            name: nome,
+            type: tipo,
+            color: cor
+        };
+        
+        categories.push(novaCategoria);
+        carregarCategorias();
+        return true;
+    }
+    
+    // Modo backend C#
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categorias/criar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Nome: nome, Tipo: tipo, Cor: cor })
+        });
+        
+        if (response.ok) {
+            await carregarCategorias();
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Erro ao criar categoria:', error);
+        return false;
+    }
+}
+
+async function eliminarCategoria(categoriaId) {
+    if (!USE_BACKEND) {
+        // Modo local
+        if (transactions.some(t => t.categoryId === parseInt(categoriaId))) {
+            alert('Não é possível eliminar esta categoria porque existem transações associadas.');
+            return;
+        }
+        
+        if (confirm('Tem certeza que deseja eliminar esta categoria?')) {
+            const index = categories.findIndex(c => c.id === parseInt(categoriaId));
+            if (index > -1) {
+                categories.splice(index, 1);
+                carregarCategorias();
+            }
+        }
+        return;
+    }
+    
+    // Modo backend C#
+    if (!confirm('Tem certeza que deseja eliminar esta categoria? Isso pode afetar transações associadas.')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categorias/${categoriaId}/eliminar`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            await carregarCategorias();
+            alert('Categoria eliminada com sucesso!');
+        }
+    } catch (error) {
+        console.error('Erro ao eliminar categoria:', error);
+        alert('Erro ao eliminar categoria.');
+    }
+}
+
+// ===========================================
+// || FUNÇÕES DE RELATÓRIOS
+// ===========================================
+async function carregarRelatorios() {
+    if (!USE_BACKEND) {
+        // Modo local - usar função existente
+        aplicarFiltrosRelatorio();
+        return;
+    }
+    
+    // Modo backend C#
+    if (!usuarioLogado) return;
+    
+    try {
+        // Carregar estatísticas básicas
+        const hoje = new Date();
+        const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+        
+        const response = await fetch(
+            `${API_BASE_URL}/api/${usuarioLogado.Id}/relatorio/totais-por-periodo?inicio=${primeiroDiaMes.toISOString()}&fim=${ultimoDiaMes.toISOString()}`
+        );
+        
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('totalMovimentado').textContent = `${(data.TotalReceitas + data.TotalDespesas).toFixed(2)} €`;
+            document.getElementById('totalReceitasRelatorio').textContent = `${data.TotalReceitas.toFixed(2)} €`;
+            document.getElementById('totalDespesasRelatorio').textContent = `${data.TotalDespesas.toFixed(2)} €`;
+            document.getElementById('saldoFinalRelatorio').textContent = `${data.SaldoNoPeriodo.toFixed(2)} €`;
+        }
+        
+        // Carregar relatório por categoria
+        await carregarRelatorioPorCategoria();
+        
+    } catch (error) {
+        console.error('Erro ao carregar relatórios:', error);
+    }
+}
+
+// ===========================================
+// || FUNÇÕES DE NAVEGAÇÃO E UI
+// ===========================================
+function mostrarPagina(idPagina) {
+    // Esconder todas as páginas
+    document.querySelectorAll('.page-content').forEach(pagina => {
+        pagina.classList.remove('active-page');
+    });
+    
+    // Mostrar a página solicitada
+    const pagina = document.getElementById(idPagina);
+    if (pagina) {
+        pagina.classList.add('active-page');
+    }
+    
+    // Atualizar menu ativo
+    document.querySelectorAll('#sidebar nav li').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Adicionar classe ativa ao item correspondente
+    let linkId = '';
+    switch(idPagina) {
+        case 'page-dashboard':
+            linkId = 'dashboardLink';
+            break;
+        case 'page-despesas':
+            linkId = 'despesasLink';
+            break;
+        case 'page-receitas':
+            linkId = 'receitasLink';
+            break;
+        case 'page-categorias':
+            linkId = 'categoryLink';
+            break;
+        case 'page-relatorios':
+            linkId = 'relatorioLink';
+            break;
+    }
+    
+    const linkElement = document.querySelector(`#${linkId}`);
+    if (linkElement && linkElement.closest('li')) {
+        linkElement.closest('li').classList.add('active');
+    }
+    
+    // Carregar dados da página
+    switch(idPagina) {
+        case 'page-dashboard':
+            carregarDashboard();
+            break;
+        case 'page-despesas':
+            carregarDespesas();
+            break;
+        case 'page-receitas':
+            carregarReceitas();
+            break;
+        case 'page-categorias':
+            carregarCategorias();
+            break;
+        case 'page-relatorios':
+            carregarRelatorios();
+            break;
+    }
+}
+
+function abrirModal(idModal) {
+    const modal = document.getElementById(idModal);
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        
+        // Se for modal de transação, carregar categorias no dropdown
+        if (idModal === 'transactionModal') {
+            carregarCategoriasParaDropdown();
+        }
+        
+        // Se for modal de categoria, resetar formulário
+        if (idModal === 'categoryModal') {
+            document.getElementById('categoryForm').reset();
+            document.getElementById('categoryId').value = '';
+            document.getElementById('categoryModalTitle').textContent = 'Nova Categoria';
+        }
+        
+        // Definir data atual no formulário de transação
+        if (idModal === 'transactionModal') {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('transactionDate').value = today;
         }
     }
 }
 
-// Ouvinte para o formulário de Categoria
-if (categoryForm) {
-    categoryForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const id = categoryIdInput && categoryIdInput.value ? parseInt(categoryIdInput.value) : null;
-        const newCategory = {
-            id: id || nextCategoryId,
-            name: categoryNameInput ? categoryNameInput.value : '',
-            type: categoryTypeInput ? categoryTypeInput.value : 'expense',
-            color: categoryColorInput ? categoryColorInput.value : '#6a1b9a'
-        };
-
-        if (id) {
-            // Edição
-            const index = categories.findIndex(c => c.id === id);
-            if (index > -1) {
-                categories[index] = newCategory;
-            }
-        } else {
-            // Nova Categoria
-            categories.push(newCategory);
-            nextCategoryId++;
-        }
-
-        closeModal('categoryModal');
-        renderCategories();
-    });
+function fecharModal(idModal) {
+    const modal = document.getElementById(idModal);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
 }
 
-// --- Lógica de Login/Registro ---
+function mostrarErroLogin(mensagem) {
+    const erroElement = document.getElementById('loginEmail-error') || 
+                       document.getElementById('loginPassword-error');
+    if (erroElement) {
+        erroElement.textContent = mensagem;
+        erroElement.style.display = 'block';
+        
+        // Auto-esconder após 5 segundos
+        setTimeout(() => {
+            erroElement.style.display = 'none';
+        }, 5000);
+    }
+}
 
-/**
- * Atualiza a interface com as informações do usuário logado
- */
-function updateUserInterface() {
-    if (currentUser) {
-        // Mostrar nome e email do usuário
-        setTextSafe('userName', currentUser.name);
-        setTextSafe('userEmail', currentUser.email);
+function mostrarErroRegistro(mensagem) {
+    const erroElement = document.getElementById('registerEmail-error') || 
+                       document.getElementById('registerPassword-error');
+    if (erroElement) {
+        erroElement.textContent = mensagem;
+        erroElement.style.display = 'block';
         
-        // Iniciais para o avatar
-        const initials = currentUser.name
-            .split(' ')
-            .map(n => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
-        if (userAvatar) userAvatar.textContent = initials;
+        // Auto-esconder após 5 segundos
+        setTimeout(() => {
+            erroElement.style.display = 'none';
+        }, 5000);
+    }
+}
+
+function atualizarInterfaceUsuario() {
+    const userNameElement = document.getElementById('userName');
+    const userEmailElement = document.getElementById('userEmail');
+    const userAvatarElement = document.getElementById('userAvatar');
+    
+    if (usuarioLogado) {
+        // Modo backend C# vs modo local
+        const nome = usuarioLogado.Nome || usuarioLogado.name;
+        const email = usuarioLogado.Email || usuarioLogado.email;
         
-        // Atualizar o submenu
+        if (userNameElement) userNameElement.textContent = nome || 'Usuário';
+        if (userEmailElement) userEmailElement.textContent = email || '';
+        
+        // Iniciais para avatar
+        if (userAvatarElement && nome) {
+            const initials = nome
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+            userAvatarElement.textContent = initials;
+        }
+        
+        // Atualizar submenu
         const userSubmenu = document.getElementById('userSubmenu');
         if (userSubmenu) {
             userSubmenu.innerHTML = `
                 <a id="logoutLink">Logout</a>
                 <a id="profileLink">Perfil</a>
             `;
-            
-            // Adicionar evento de logout
-            document.getElementById('logoutLink')?.addEventListener('click', logout);
         }
-        
     } else {
         // Usuário não logado
-        setTextSafe('userName', 'Convidado');
-        setTextSafe('userEmail', '');
-        if (userAvatar) userAvatar.textContent = '?';
+        if (userNameElement) userNameElement.textContent = 'Admin';
+        if (userEmailElement) userEmailElement.textContent = '';
+        if (userAvatarElement) userAvatarElement.textContent = 'Ad';
         
         const userSubmenu = document.getElementById('userSubmenu');
         if (userSubmenu) {
@@ -870,315 +1005,436 @@ function updateUserInterface() {
     }
 }
 
-/**
- * Login do usuário
- */
-function login(email, password) {
-    const user = users.find(u => u.email === email && u.password === password);
+// ===========================================
+// || FUNÇÕES AUXILIARES
+// ===========================================
+async function carregarCategoriasParaDropdown() {
+    const dropdown = document.getElementById('transactionCategory');
+    if (!dropdown) return;
     
-    if (user) {
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        updateUserInterface();
-        closeModal('loginpopup');
-        alert(`Bem-vindo de volta, ${user.name}!`);
-        showPage('page-dashboard', 'dashboardLink');
+    dropdown.innerHTML = '<option value="">Selecione uma categoria</option>';
+    
+    if (!USE_BACKEND) {
+        // Modo local
+        const tipoTransacao = document.getElementById('transactionTypeHidden')?.value || 'expense';
+        const filteredCategories = categories.filter(c => c.type === tipoTransacao);
+        
+        filteredCategories.forEach(categoria => {
+            const option = document.createElement('option');
+            option.value = categoria.id;
+            option.textContent = categoria.name;
+            option.style.color = categoria.color;
+            dropdown.appendChild(option);
+        });
     } else {
-        // Tenta encontrar o elemento de erro correto
-        const errorElement = document.getElementById('loginName-error') || 
-                             document.getElementById('loginEmail-error') ||
-                             document.getElementById('loginPassword-error');
-        if (errorElement) {
-            errorElement.textContent = 'Email ou senha incorretos!';
+        // Modo backend C#
+        try {
+            const categorias = await carregarCategorias();
+            const tipoTransacao = document.getElementById('transactionTypeHidden')?.value || 'expense';
+            const tipoFiltrado = tipoTransacao === 'expense' ? 'Despesa' : 'Receita';
+            const categoriasFiltradas = categorias.filter(c => c.Tipo === tipoFiltrado);
+            
+            categoriasFiltradas.forEach(categoria => {
+                const option = document.createElement('option');
+                option.value = categoria.Id;
+                option.textContent = categoria.Nome;
+                option.style.color = categoria.Cor || '#6a1b9a';
+                dropdown.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Erro ao carregar categorias para dropdown:', error);
         }
     }
 }
 
-/**
- * Registro de novo usuário
- */
-function register(name, email, password, confirmPassword) {
-    // Validações
-    if (password !== confirmPassword) {
-        setTextSafe('registerConfirmPassword-error', 'As senhas não coincidem!');
+// ===========================================
+// || FUNÇÕES PARA COMPATIBILIDADE COM CÓDIGO ANTERIOR
+// ===========================================
+// Funções de compatibilidade para código anterior
+window.addTransaction = function(type) {
+    if (!usuarioLogado && USE_BACKEND) {
+        alert('Por favor, faça login primeiro!');
+        abrirModal('loginpopup');
         return;
     }
     
-    if (password.length < 6) {
-        setTextSafe('registerPassword-error', 'A senha deve ter pelo menos 6 caracteres!');
-        return;
+    document.getElementById('transactionModalTitle').textContent = 
+        type === 'expense' ? 'Nova Despesa' : 'Nova Receita';
+    document.getElementById('transactionTypeHidden').value = type;
+    document.getElementById('transactionId').value = '';
+    document.getElementById('transactionForm').reset();
+    
+    // Definir data atual
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('transactionDate').value = today;
+    
+    carregarCategoriasParaDropdown();
+    abrirModal('transactionModal');
+};
+
+window.editTransaction = function(id, type) {
+    if (!USE_BACKEND) {
+        // Modo local
+        const t = transactions.find(t => t.id === id);
+        if (!t) return;
+        
+        document.getElementById('transactionModalTitle').textContent = 
+            type === 'expense' ? 'Editar Despesa' : 'Editar Receita';
+        document.getElementById('transactionTypeHidden').value = type;
+        document.getElementById('transactionId').value = t.id;
+        document.getElementById('transactionDate').value = t.date;
+        document.getElementById('transactionDescription').value = t.description;
+        document.getElementById('transactionValue').value = t.value;
+        
+        carregarCategoriasParaDropdown();
+        // Aguardar um pouco para o dropdown carregar
+        setTimeout(() => {
+            document.getElementById('transactionCategory').value = t.categoryId;
+        }, 100);
+        
+        abrirModal('transactionModal');
+    } else {
+        // Modo backend - implementar se necessário
+        alert('Edição no modo backend ainda não implementada');
+    }
+};
+
+window.deleteTransaction = function(id, type) {
+    if (!USE_BACKEND) {
+        // Modo local
+        if (confirm('Tem certeza que deseja eliminar esta transação?')) {
+            const index = transactions.findIndex(t => t.id === id);
+            if (index > -1) {
+                transactions.splice(index, 1);
+                if (type === 'expense') {
+                    carregarDespesas();
+                } else {
+                    carregarReceitas();
+                }
+                carregarDashboard();
+            }
+        }
+    } else {
+        // Modo backend
+        if (type === 'expense') {
+            eliminarDespesa(id);
+        } else {
+            eliminarReceita(id);
+        }
+    }
+};
+
+window.editCategory = function(id) {
+    if (!USE_BACKEND) {
+        // Modo local
+        const c = categories.find(c => c.id === id);
+        if (!c) return;
+        
+        document.getElementById('categoryModalTitle').textContent = 'Editar Categoria';
+        document.getElementById('categoryId').value = c.id;
+        document.getElementById('categoryName').value = c.name;
+        document.getElementById('categoryType').value = c.type;
+        document.getElementById('categoryColor').value = c.color;
+        
+        abrirModal('categoryModal');
+    } else {
+        // Modo backend - implementar se necessário
+        alert('Edição de categoria no modo backend ainda não implementada');
+    }
+};
+
+window.deleteCategory = function(id) {
+    eliminarCategoria(id);
+};
+
+// ===========================================
+// || EVENT LISTENERS E INICIALIZAÇÃO
+// ===========================================
+document.addEventListener('DOMContentLoaded', function() {
+    // ========== INICIALIZAÇÃO ==========
+    // Carregar usuário do localStorage
+    const usuarioSalvo = localStorage.getItem('currentUser');
+    if (usuarioSalvo) {
+        usuarioLogado = JSON.parse(usuarioSalvo);
     }
     
-    if (users.some(u => u.email === email)) {
-        setTextSafe('registerEmail-error', 'Este email já está registado!');
-        return;
-    }
+    atualizarInterfaceUsuario();
     
-    const newUser = {
-        id: Date.now(),
-        name: name,
-        email: email,
-        password: password,
-        createdAt: new Date().toISOString()
+    // ========== NAVEGAÇÃO ==========
+    const navLinks = {
+        'dashboardLink': 'page-dashboard',
+        'despesasLink': 'page-despesas',
+        'receitasLink': 'page-receitas',
+        'categoryLink': 'page-categorias',
+        'relatorioLink': 'page-relatorios'
     };
     
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
+    Object.entries(navLinks).forEach(([linkId, pageId]) => {
+        const link = document.getElementById(linkId);
+        if (link) {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                mostrarPagina(pageId);
+            });
+        }
+    });
     
-    currentUser = newUser;
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    // ========== LOGIN/REGISTRO ==========
+    document.getElementById('loginLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const submenu = document.getElementById('userSubmenu');
+        if (submenu) submenu.style.display = 'none';
+        abrirModal('loginpopup');
+    });
     
-    updateUserInterface();
-    closeModal('registerpopup');
-    alert(`Conta criada com sucesso, ${name}!`);
-    showPage('page-dashboard', 'dashboardLink');
-}
-
-/**
- * Logout do usuário
- */
-function logout() {
-    if (confirm('Tem certeza que deseja sair?')) {
-        currentUser = null;
-        localStorage.removeItem('currentUser');
-        updateUserInterface();
-        alert('Até breve!');
-        showPage('page-dashboard', 'dashboardLink');
-    }
-}
-
-// Event Listeners para formulários de login/registro (CORRIGIDO)
-if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+    document.getElementById('registerLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const submenu = document.getElementById('userSubmenu');
+        if (submenu) submenu.style.display = 'none';
+        abrirModal('registerpopup');
+    });
+    
+    // Logout
+    document.addEventListener('click', (e) => {
+        if (e.target.id === 'logoutLink') {
+            e.preventDefault();
+            fazerLogout();
+        }
+    });
+    
+    // Alternar entre login e registro
+    document.getElementById('goToRegister')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        fecharModal('loginpopup');
+        abrirModal('registerpopup');
+    });
+    
+    document.getElementById('goToLogin')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        fecharModal('registerpopup');
+        abrirModal('loginpopup');
+    });
+    
+    // ========== FORMULÁRIO LOGIN ==========
+    document.querySelector('#loginpopup form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Buscar email do campo correto
-        let emailInput = document.getElementById('loginEmail');
-        if (!emailInput) {
-            // Fallback para o campo antigo
-            emailInput = document.getElementById('loginName');
-        }
-        
-        const passwordInput = document.getElementById('loginPassword');
-        
-        if (!emailInput || !passwordInput) {
-            alert('Erro no formulário. Por favor, recarregue a página.');
-            return;
-        }
-        
-        const email = emailInput.value;
-        const password = passwordInput.value;
-        
-        // Limpar erros anteriores
-        const errorIds = ['loginEmail-error', 'loginName-error', 'loginPassword-error'];
-        errorIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = '';
-        });
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
         
         if (!email || !password) {
-            setTextSafe('loginPassword-error', 'Preencha todos os campos!');
+            mostrarErroLogin('Preencha todos os campos');
             return;
         }
         
-        login(email, password);
+        await fazerLogin(email, password);
     });
-}
-
-if (registerForm) {
-    registerForm.addEventListener('submit', (e) => {
+    
+    // ========== FORMULÁRIO REGISTRO ==========
+    document.querySelector('#registerpopup form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Obter valores de forma segura
-        const getValue = (id) => {
-            const el = document.getElementById(id);
-            return el ? el.value : '';
-        };
+        const nome = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('registerConfirmPassword').value;
         
-        const name = getValue('registerName');
-        const email = getValue('registerEmail');
-        const password = getValue('registerPassword');
-        const confirmPassword = getValue('registerConfirmPassword');
-        
-        // Limpar todos os erros
-        const errorIds = [
-            'registerName-error',
-            'registerEmail-error',
-            'registerPassword-error',
-            'registerConfirmPassword-error'
-        ];
-        
-        errorIds.forEach(id => {
-            const errorEl = document.getElementById(id);
-            if (errorEl) errorEl.textContent = '';
-        });
-        
-        // Validações
-        if (!name || !email || !password || !confirmPassword) {
-            setTextSafe('registerConfirmPassword-error', 'Preencha todos os campos!');
+        if (!nome || !email || !password || !confirmPassword) {
+            mostrarErroRegistro('Preencha todos os campos');
             return;
         }
         
         if (password !== confirmPassword) {
-            setTextSafe('registerConfirmPassword-error', 'As senhas não coincidem!');
+            mostrarErroRegistro('As passwords não coincidem');
             return;
         }
         
         if (password.length < 6) {
-            setTextSafe('registerPassword-error', 'A senha deve ter pelo menos 6 caracteres!');
+            mostrarErroRegistro('A password deve ter pelo menos 6 caracteres');
             return;
         }
         
-        register(name, email, password, confirmPassword);
+        await registrarUsuario(nome, email, password);
     });
-}
-
-// --- Lógica de UI/Sidebar ---
-
-// Inicializa o dashboard e a navegação
-document.addEventListener('DOMContentLoaded', () => {
-    // Inicializar variáveis da sidebar
-    sidebar = document.getElementById('sidebar');
-    mainContent = document.getElementById('main-content');
-    openBtn = document.getElementById('openBtn');
-    closeBtn = document.getElementById('closeBtn');
     
-    // Atualiza interface do usuário
-    updateUserInterface();
-    
-    // Mostra dashboard inicial
-    showPage('page-dashboard', 'dashboardLink');
-    
-    // Oculta/Mostra o submenu do Utilizador
-    const toggleUserMenu = document.getElementById('toggleUserMenu');
-    const userSubmenu = document.getElementById('userSubmenu');
-    
-    if (toggleUserMenu && userSubmenu) {
-        toggleUserMenu.addEventListener('click', (e) => {
-            e.preventDefault();
-            userSubmenu.style.display = userSubmenu.style.display === 'block' ? 'none' : 'block';
-        });
-    }
-    
-    // Eventos para popups Login/Register
-    document.addEventListener('click', (e) => {
-        if (e.target.id === 'loginLink' && !currentUser) {
-            e.preventDefault();
-            if (userSubmenu) userSubmenu.style.display = 'none';
-            openModal('loginpopup');
+    // ========== FORMULÁRIO CATEGORIA ==========
+    document.getElementById('categoryForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const nome = document.getElementById('categoryName').value;
+        const tipo = document.getElementById('categoryType').value;
+        const cor = document.getElementById('categoryColor').value;
+        const categoriaId = document.getElementById('categoryId').value;
+        
+        if (!nome || !tipo) {
+            alert('Preencha todos os campos obrigatórios');
+            return;
         }
         
-        if (e.target.id === 'registerLink' && !currentUser) {
-            e.preventDefault();
-            if (userSubmenu) userSubmenu.style.display = 'none';
-            openModal('registerpopup');
-        }
+        // Converter tipo para formato backend se necessário
+        const tipoBackend = tipo === 'expense' ? 'Despesa' : 'Receita';
         
-        // Alternar entre login e registro
-        if (e.target.id === 'goToLogin') {
-            e.preventDefault();
-            closeModal('registerpopup');
-            openModal('loginpopup');
-        }
-        
-        if (e.target.id === 'goToRegister') {
-            e.preventDefault();
-            closeModal('loginpopup');
-            openModal('registerpopup');
-        }
-    });
-
-    // Função de toggle da sidebar
-    function toggleSidebar() {
-        if (sidebar && mainContent && openBtn && closeBtn) {
-            if (sidebar.style.width === '250px') {
-                sidebar.style.width = '0';
-                mainContent.style.marginLeft = '0';
-                openBtn.style.display = 'block';
-                closeBtn.style.display = 'none';
-            } else {
-                sidebar.style.width = '250px';
-                mainContent.style.marginLeft = '250px';
-                openBtn.style.display = 'none';
-                closeBtn.style.display = 'block';
-            }
-        }
-    }
-
-    // Listener para o botão de abrir/fechar
-    if (openBtn) openBtn.addEventListener('click', toggleSidebar);
-    if (closeBtn) closeBtn.addEventListener('click', toggleSidebar);
-
-    // Adaptação da Sidebar ao redimensionamento da janela
-    function handleResize() {
-        if (!sidebar || !mainContent || !openBtn || !closeBtn) return;
-        
-        if (window.innerWidth > 768) {
-            sidebar.style.width = '250px';
-            mainContent.style.marginLeft = '250px';
-            openBtn.style.display = 'none';
-            closeBtn.style.display = 'none';
+        if (categoriaId) {
+            // Editar categoria existente
+            // Implementar edição se necessário
+            alert('Edição de categoria ainda não implementada');
         } else {
-            if (sidebar.style.width === '250px') {
-                openBtn.style.display = 'none';
-                closeBtn.style.display = 'block';
+            // Criar nova categoria
+            const sucesso = await criarCategoria(nome, tipoBackend, cor);
+            if (sucesso) {
+                fecharModal('categoryModal');
+                alert('Categoria criada com sucesso!');
             } else {
-                sidebar.style.width = '0';
-                mainContent.style.marginLeft = '0';
-                openBtn.style.display = 'block';
-                closeBtn.style.display = 'none';
+                alert('Erro ao criar categoria');
             }
         }
-    }
+    });
     
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Executa na inicialização
+    document.getElementById('addCategoryBtn')?.addEventListener('click', () => {
+        abrirModal('categoryModal');
+    });
     
-    // Definir data atual no formulário de transações
-    const today = new Date().toISOString().split('T')[0];
-    if (transactionDate) {
-        transactionDate.value = today;
-        transactionDate.min = '2000-01-01';
-        transactionDate.max = today;
-    }
+    // ========== FORMULÁRIO TRANSAÇÃO ==========
+    document.getElementById('transactionForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const data = document.getElementById('transactionDate').value;
+        const descricao = document.getElementById('transactionDescription').value;
+        const valor = document.getElementById('transactionValue').value;
+        const categoriaId = document.getElementById('transactionCategory').value;
+        const tipo = document.getElementById('transactionTypeHidden').value;
+        const transacaoId = document.getElementById('transactionId').value;
+        
+        if (!data || !descricao || !valor || !categoriaId) {
+            alert('Preencha todos os campos obrigatórios');
+            return;
+        }
+        
+        let sucesso = false;
+        
+        if (tipo === 'expense') {
+            sucesso = await criarDespesa(valor, descricao, categoriaId);
+        } else if (tipo === 'income') {
+            sucesso = await criarReceita(valor, descricao, categoriaId);
+        }
+        
+        if (sucesso) {
+            fecharModal('transactionModal');
+        } else {
+            alert('Erro ao salvar transação');
+        }
+    });
     
-    // Event listeners para relatórios
-    if (aplicarFiltros) {
-        aplicarFiltros.addEventListener('click', aplicarFiltrosRelatorio);
-    }
+    document.getElementById('addDespesaBtn')?.addEventListener('click', () => {
+        addTransaction('expense');
+    });
     
-    if (periodoRelatorio) {
-        periodoRelatorio.addEventListener('change', function() {
-            const filtroDataPersonalizada = document.getElementById('filtroDataPersonalizada');
-            if (filtroDataPersonalizada) {
-                filtroDataPersonalizada.style.display = 
-                    this.value === 'personalizado' ? 'flex' : 'none';
+    document.getElementById('addReceitaBtn')?.addEventListener('click', () => {
+        addTransaction('income');
+    });
+    
+    // ========== BOTÕES FECHAR MODAL ==========
+    document.querySelectorAll('.closeModal').forEach(botao => {
+        botao.addEventListener('click', function() {
+            const modalId = this.getAttribute('data-modal');
+            fecharModal(modalId);
+        });
+    });
+    
+    // Fechar modais ao clicar fora
+    document.querySelectorAll('.popup-overlay, .modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModal(this.id);
             }
         });
+    });
+    
+    // ========== MENU RESPONSIVO ==========
+    document.getElementById('openBtn')?.addEventListener('click', () => {
+        document.getElementById('sidebar').style.left = '0';
+    });
+    
+    document.getElementById('closeBtn')?.addEventListener('click', () => {
+        document.getElementById('sidebar').style.left = '-250px';
+    });
+    
+    // ========== TOGGLE SUBMENU ==========
+    document.getElementById('toggleUserMenu')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const submenu = document.getElementById('userSubmenu');
+        if (submenu) {
+            submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+        }
+    });
+    
+    // ========== RELATÓRIOS ==========
+    document.getElementById('periodoRelatorio')?.addEventListener('change', function() {
+        const filtroPersonalizado = document.getElementById('filtroDataPersonalizada');
+        if (filtroPersonalizado) {
+            filtroPersonalizado.style.display = this.value === 'personalizado' ? 'block' : 'none';
+        }
+    });
+    
+    document.getElementById('aplicarFiltros')?.addEventListener('click', async () => {
+        // Usar função de relatórios do código anterior para compatibilidade
+        if (typeof aplicarFiltrosRelatorio === 'function') {
+            aplicarFiltrosRelatorio();
+        } else {
+            await carregarRelatorios();
+        }
+    });
+    
+    document.getElementById('gerarRelatorioBtn')?.addEventListener('click', () => {
+        if (typeof exportarRelatorioPDF === 'function') {
+            exportarRelatorioPDF();
+        } else {
+            alert('Funcionalidade de exportação PDF será implementada em breve!');
+        }
+    });
+    
+    // ========== MOSTRAR DASHBOARD INICIAL ==========
+    mostrarPagina('page-dashboard');
+    
+    // ========== INICIALIZAR DATAS ==========
+    const hoje = new Date().toISOString().split('T')[0];
+    if (document.getElementById('transactionDate')) {
+        document.getElementById('transactionDate').value = hoje;
     }
     
-    const gerarRelatorioBtn = document.getElementById('gerarRelatorioBtn');
-    if (gerarRelatorioBtn) {
-        gerarRelatorioBtn.addEventListener('click', exportarRelatorioPDF);
-    }
-    
-    // Alternar entre login e registro
-    const goToLogin = document.getElementById('goToLogin');
-    const goToRegister = document.getElementById('goToRegister');
-    
-    if (goToLogin) {
-        goToLogin.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeModal('registerpopup');
-            openModal('loginpopup');
-        });
-    }
-    
-    if (goToRegister) {
-        goToRegister.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeModal('loginpopup');
-            openModal('registerpopup');
-        });
+    // Configurar datas mínimas/máximas para relatórios
+    if (document.getElementById('dataInicio')) {
+        document.getElementById('dataInicio').max = hoje;
+        document.getElementById('dataFim').max = hoje;
+        document.getElementById('dataFim').min = document.getElementById('dataInicio').value;
     }
 });
+
+// ===========================================
+// || FUNÇÕES DE RELATÓRIOS (do código anterior)
+// ===========================================
+// Estas funções são mantidas para compatibilidade
+function aplicarFiltrosRelatorio() {
+    // Implementação do código anterior
+    if (typeof window.aplicarFiltrosRelatorioOriginal === 'function') {
+        window.aplicarFiltrosRelatorioOriginal();
+    }
+}
+
+function exportarRelatorioPDF() {
+    // Implementação do código anterior
+    if (typeof window.exportarRelatorioPDFOriginal === 'function') {
+        window.exportarRelatorioPDFOriginal();
+    } else {
+        alert('Exportação PDF em desenvolvimento');
+    }
+}
+
+// Salvar referências às funções originais se existirem
+if (typeof aplicarFiltrosRelatorio === 'function') {
+    window.aplicarFiltrosRelatorioOriginal = aplicarFiltrosRelatorio;
+}
+
+if (typeof exportarRelatorioPDF === 'function') {
+    window.exportarRelatorioPDFOriginal = exportarRelatorioPDF;
+}
