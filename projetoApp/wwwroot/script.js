@@ -128,7 +128,7 @@ function carregarUltimasTransacoes() {
 }
 
 // ===========================================
-// || FUNÇÕES DE DESPESAS
+// || FUNÇÕES DE DESPESAS (SIMPLIFICADO)
 // ===========================================
 function carregarDespesas() {
     const filteredTransactions = transactions.filter(t => t.type === 'expense');
@@ -163,9 +163,21 @@ function carregarDespesas() {
     document.getElementById('maiorDespesa').textContent = `${maxValue.toFixed(2)} €`;
 }
 
-function criarDespesa(valor, descricao, categoriaId) {
-    const categoria = categories.find(c => c.id === parseInt(categoriaId));
-    if (!categoria) return false;
+function criarDespesa(valor, descricao, categoriaNome) {
+    // Encontrar ou criar categoria
+    let categoria = categories.find(c => c.name.toLowerCase() === categoriaNome.toLowerCase() && c.type === 'expense');
+    
+    if (!categoria) {
+        // Criar nova categoria automaticamente
+        categoria = {
+            id: Date.now(),
+            name: categoriaNome,
+            type: 'expense',
+            color: '#ff6b6b' // Cor padrão para despesas
+        };
+        categories.push(categoria);
+        salvarDados();
+    }
     
     const novaDespesa = {
         id: Date.now(),
@@ -174,7 +186,7 @@ function criarDespesa(valor, descricao, categoriaId) {
         value: parseFloat(valor),
         type: 'expense',
         category: categoria.name,
-        categoryId: parseInt(categoriaId)
+        categoryId: categoria.id
     };
     
     transactions.push(novaDespesa);
@@ -185,7 +197,7 @@ function criarDespesa(valor, descricao, categoriaId) {
 }
 
 // ===========================================
-// || FUNÇÕES DE RECEITAS
+// || FUNÇÕES DE RECEITAS (SIMPLIFICADO)
 // ===========================================
 function carregarReceitas() {
     const filteredTransactions = transactions.filter(t => t.type === 'income');
@@ -220,9 +232,21 @@ function carregarReceitas() {
     document.getElementById('maiorReceita').textContent = `${maxValue.toFixed(2)} €`;
 }
 
-function criarReceita(valor, descricao, categoriaId) {
-    const categoria = categories.find(c => c.id === parseInt(categoriaId));
-    if (!categoria) return false;
+function criarReceita(valor, descricao, categoriaNome) {
+    // Encontrar ou criar categoria
+    let categoria = categories.find(c => c.name.toLowerCase() === categoriaNome.toLowerCase() && c.type === 'income');
+    
+    if (!categoria) {
+        // Criar nova categoria automaticamente
+        categoria = {
+            id: Date.now(),
+            name: categoriaNome,
+            type: 'income',
+            color: '#4caf50' // Cor padrão para receitas
+        };
+        categories.push(categoria);
+        salvarDados();
+    }
     
     const novaReceita = {
         id: Date.now(),
@@ -231,7 +255,7 @@ function criarReceita(valor, descricao, categoriaId) {
         value: parseFloat(valor),
         type: 'income',
         category: categoria.name,
-        categoryId: parseInt(categoriaId)
+        categoryId: categoria.id
     };
     
     transactions.push(novaReceita);
@@ -242,7 +266,7 @@ function criarReceita(valor, descricao, categoriaId) {
 }
 
 // ===========================================
-// || FUNÇÕES DE CATEGORIAS
+// || FUNÇÕES DE CATEGORIAS (SIMPLIFICADO)
 // ===========================================
 function carregarCategorias() {
     const expenseCategories = categories.filter(c => c.type === 'expense');
@@ -282,9 +306,6 @@ function carregarCategorias() {
         });
     }
     
-    // Carregar categorias no dropdown
-    carregarCategoriasParaDropdown();
-    
     return categories;
 }
 
@@ -321,24 +342,6 @@ function eliminarCategoria(categoriaId) {
 // ===========================================
 // || FUNÇÕES AUXILIARES
 // ===========================================
-function carregarCategoriasParaDropdown() {
-    const dropdown = document.getElementById('transactionCategory');
-    if (!dropdown) return;
-    
-    dropdown.innerHTML = '<option value="">Selecione uma categoria</option>';
-    
-    const tipoTransacao = document.getElementById('transactionTypeHidden')?.value || 'expense';
-    const filteredCategories = categories.filter(c => c.type === tipoTransacao);
-    
-    filteredCategories.forEach(categoria => {
-        const option = document.createElement('option');
-        option.value = categoria.id;
-        option.textContent = categoria.name;
-        option.style.color = categoria.color;
-        dropdown.appendChild(option);
-    });
-}
-
 function salvarDados() {
     localStorage.setItem('transactions', JSON.stringify(transactions));
     localStorage.setItem('categories', JSON.stringify(categories));
@@ -356,11 +359,7 @@ function editarTransacao(id, type) {
     document.getElementById('transactionDate').value = t.date;
     document.getElementById('transactionDescription').value = t.description;
     document.getElementById('transactionValue').value = t.value;
-    
-    carregarCategoriasParaDropdown();
-    setTimeout(() => {
-        document.getElementById('transactionCategory').value = t.categoryId;
-    }, 100);
+    document.getElementById('transactionCategoryInput').value = t.category;
     
     abrirModal('transactionModal');
 }
@@ -465,10 +464,6 @@ function abrirModal(idModal) {
         modal.style.display = 'flex';
         document.body.classList.add('modal-open');
         
-        if (idModal === 'transactionModal') {
-            carregarCategoriasParaDropdown();
-        }
-        
         if (idModal === 'categoryModal') {
             document.getElementById('categoryForm').reset();
             document.getElementById('categoryId').value = '';
@@ -478,6 +473,12 @@ function abrirModal(idModal) {
         if (idModal === 'transactionModal') {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('transactionDate').value = today;
+            document.getElementById('transactionCategoryInput').value = '';
+            
+            // Definir placeholder baseado no tipo
+            const tipo = document.getElementById('transactionTypeHidden').value;
+            const placeholder = tipo === 'expense' ? 'Ex: Alimentação, Transporte...' : 'Ex: Salário, Freelance...';
+            document.getElementById('transactionCategoryInput').placeholder = placeholder;
         }
     }
 }
@@ -561,16 +562,20 @@ function atualizarInterfaceUsuario() {
 }
 
 // ===========================================
-// || FUNÇÕES DE RELATÓRIOS (SIMPLES)
+// || FUNÇÕES DE RELATÓRIOS (CORRIGIDO)
 // ===========================================
 function carregarRelatorios() {
     const periodo = document.getElementById('periodoRelatorio')?.value || 'mes';
+    const tipoTransacao = document.getElementById('tipoTransacao')?.value || 'todas';
+    
     let dataInicio, dataFim;
     const hoje = new Date();
     
+    // Converter valores para corresponder ao HTML
     switch(periodo) {
         case 'semana':
             dataInicio = new Date(hoje.setDate(hoje.getDate() - 7));
+            dataFim = new Date();
             break;
         case 'mes':
             dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -580,17 +585,38 @@ function carregarRelatorios() {
             dataInicio = new Date(hoje.getFullYear(), 0, 1);
             dataFim = new Date(hoje.getFullYear(), 11, 31);
             break;
+        case 'personalizado':
+            const inicioInput = document.getElementById('dataInicio')?.value;
+            const fimInput = document.getElementById('dataFim')?.value;
+            dataInicio = inicioInput ? new Date(inicioInput) : null;
+            dataFim = fimInput ? new Date(fimInput) : null;
+            break;
         default:
-            dataInicio = new Date(2025, 0, 1);
-            dataFim = hoje;
+            dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+            dataFim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
     }
     
-    const transacoesFiltradas = transactions.filter(t => {
+    // Filtrar transações por data
+    let transacoesFiltradas = transactions.filter(t => {
         const dataTransacao = new Date(t.date);
-        return (!dataInicio || dataTransacao >= dataInicio) && 
-               (!dataFim || dataTransacao <= dataFim);
+        
+        // Verificar data
+        const dentroDoPeriodo = (!dataInicio || dataTransacao >= dataInicio) && 
+                               (!dataFim || dataTransacao <= dataFim);
+        
+        if (!dentroDoPeriodo) return false;
+        
+        // Verificar tipo de transação
+        if (tipoTransacao === 'receitas') {
+            return t.type === 'income';
+        } else if (tipoTransacao === 'despesas') {
+            return t.type === 'expense';
+        }
+        
+        return true; // 'todas'
     });
     
+    // Calcular estatísticas
     const expenseTotal = transacoesFiltradas
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.value, 0);
@@ -602,10 +628,70 @@ function carregarRelatorios() {
     const saldo = incomeTotal - expenseTotal;
     const totalMovimentado = expenseTotal + incomeTotal;
     
+    // Atualizar estatísticas na tela
     document.getElementById('totalMovimentado').textContent = `${totalMovimentado.toFixed(2)} €`;
     document.getElementById('totalReceitasRelatorio').textContent = `${incomeTotal.toFixed(2)} €`;
     document.getElementById('totalDespesasRelatorio').textContent = `${expenseTotal.toFixed(2)} €`;
     document.getElementById('saldoFinalRelatorio').textContent = `${saldo.toFixed(2)} €`;
+    
+    // Preencher tabela de transações
+    const tbody = document.getElementById('transacoesRelatorioBody');
+    if (tbody) {
+        tbody.innerHTML = '';
+        
+        transacoesFiltradas.forEach(t => {
+            const tr = document.createElement('tr');
+            const typeColor = t.type === 'income' ? '#4caf50' : '#f44336';
+            const typeText = t.type === 'income' ? 'Receita' : 'Despesa';
+            
+            tr.innerHTML = `
+                <td>${t.date}</td>
+                <td style="color: ${typeColor}; font-weight: bold;">${typeText}</td>
+                <td>${t.description}</td>
+                <td>${t.category}</td>
+                <td style="font-weight: bold; color: ${typeColor}">${t.value.toFixed(2)} €</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    // Preencher resumo por categoria
+    const resumoCategoriasDiv = document.getElementById('resumoCategorias');
+    if (resumoCategoriasDiv) {
+        resumoCategoriasDiv.innerHTML = '';
+        
+        // Agrupar por categoria
+        const categoriasMap = {};
+        
+        transacoesFiltradas.forEach(t => {
+            if (!categoriasMap[t.category]) {
+                categoriasMap[t.category] = {
+                    total: 0,
+                    type: t.type,
+                    count: 0
+                };
+            }
+            categoriasMap[t.category].total += t.value;
+            categoriasMap[t.category].count += 1;
+        });
+        
+        // Criar cards para cada categoria
+        Object.entries(categoriasMap).forEach(([categoria, dados]) => {
+            const card = document.createElement('div');
+            card.className = 'categoria-card';
+            card.style.backgroundColor = dados.type === 'income' ? '#e8f5e9' : '#ffebee';
+            card.style.borderLeft = `4px solid ${dados.type === 'income' ? '#4caf50' : '#f44336'}`;
+            
+            card.innerHTML = `
+                <h4>${categoria}</h4>
+                <p class="categoria-valor">${dados.total.toFixed(2)} €</p>
+                <small>${dados.count} transações</small>
+                <div class="categoria-tipo">${dados.type === 'income' ? 'Receita' : 'Despesa'}</div>
+            `;
+            
+            resumoCategoriasDiv.appendChild(card);
+        });
+    }
 }
 
 // ===========================================
@@ -751,18 +837,18 @@ document.addEventListener('DOMContentLoaded', function() {
         abrirModal('categoryModal');
     });
     
-    // Formulário Transação
+    // Formulário Transação (SIMPLIFICADO - sem dropdown)
     document.getElementById('transactionForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
         
         const data = document.getElementById('transactionDate').value;
         const descricao = document.getElementById('transactionDescription').value;
         const valor = document.getElementById('transactionValue').value;
-        const categoriaId = document.getElementById('transactionCategory').value;
+        const categoriaNome = document.getElementById('transactionCategoryInput').value;
         const tipo = document.getElementById('transactionTypeHidden').value;
         const transacaoId = document.getElementById('transactionId').value;
         
-        if (!data || !descricao || !valor || !categoriaId) {
+        if (!data || !descricao || !valor || !categoriaNome) {
             alert('Preencha todos os campos obrigatórios');
             return;
         }
@@ -776,23 +862,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 transactions[index].date = data;
                 transactions[index].description = descricao;
                 transactions[index].value = parseFloat(valor);
-                transactions[index].categoryId = parseInt(categoriaId);
-                const categoria = categories.find(c => c.id === parseInt(categoriaId));
-                transactions[index].category = categoria ? categoria.name : '';
+                transactions[index].category = categoriaNome;
+                
+                // Atualizar categoriaId se necessário
+                let categoria = categories.find(c => c.name.toLowerCase() === categoriaNome.toLowerCase() && c.type === tipo);
+                if (categoria) {
+                    transactions[index].categoryId = categoria.id;
+                }
+                
                 salvarDados();
                 sucesso = true;
             }
         } else {
             // Criar nova transação
             if (tipo === 'expense') {
-                sucesso = criarDespesa(valor, descricao, categoriaId);
+                sucesso = criarDespesa(valor, descricao, categoriaNome);
             } else if (tipo === 'income') {
-                sucesso = criarReceita(valor, descricao, categoriaId);
+                sucesso = criarReceita(valor, descricao, categoriaNome);
             }
         }
         
         if (sucesso) {
             fecharModal('transactionModal');
+            alert('Transação salva com sucesso!');
         } else {
             alert('Erro ao salvar transação');
         }
@@ -823,8 +915,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('transactionDate').value = today;
+        document.getElementById('transactionCategoryInput').value = '';
+        document.getElementById('transactionCategoryInput').placeholder = type === 'expense' ? 'Ex: Alimentação, Transporte...' : 'Ex: Salário, Freelance...';
         
-        carregarCategoriasParaDropdown();
         abrirModal('transactionModal');
     };
     
@@ -881,4 +974,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Mostrar dashboard inicial
     mostrarPagina('page-dashboard');
+    
+    // Inicializar datas dos filtros
+    const hoje = new Date();
+    const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    
+    if (document.getElementById('dataInicio')) {
+        document.getElementById('dataInicio').value = primeiroDiaMes.toISOString().split('T')[0];
+        document.getElementById('dataInicio').max = hoje.toISOString().split('T')[0];
+    }
+    
+    if (document.getElementById('dataFim')) {
+        document.getElementById('dataFim').value = ultimoDiaMes.toISOString().split('T')[0];
+        document.getElementById('dataFim').max = hoje.toISOString().split('T')[0];
+    }
 });
