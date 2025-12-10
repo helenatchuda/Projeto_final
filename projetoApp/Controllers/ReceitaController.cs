@@ -53,10 +53,10 @@ namespace ProjetoApp.Controllers
                 throw new KeyNotFoundException("Receita não encontrada.");
             }
             
-            if (CategoriaController.ObterPorId(novaCategoriaId) == null)
-            {
-                throw new KeyNotFoundException("Categoria de Receita inválida.");
-            }
+        if (CategoriaController.ObterPorId(novaCategoriaId) == null)
+{
+    throw new KeyNotFoundException("Categoria inválida. Não encontrada.");
+}
 
             receita.Editar(novoValor, novaDescricao, novaCategoriaId);
             Persistencia.GuardarUtilizadores();

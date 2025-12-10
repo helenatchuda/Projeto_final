@@ -17,8 +17,8 @@ namespace ProjetoApp.Persistence
             WriteIndented = true,
         };
 
-        public List<Utilizador> Utilizadores { get; private set; }
-        public List<Categoria> Categorias { get; private set; }
+        public List<Utilizador> Utilizadores { get; private set; } = new List<Utilizador>();
+        public List<Categoria> Categorias { get; private set; } = new List<Categoria>();
 
         public GestorPersistencia()
         {
