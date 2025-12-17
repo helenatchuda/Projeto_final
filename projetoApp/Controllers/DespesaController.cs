@@ -49,11 +49,10 @@ namespace ProjetoApp.Controllers
                 throw new ArgumentNullException(nameof(utilizador), "O utilizador não pode ser nulo.");
                 
            
-            if (CategoriaController.ObterPorId(categoriaId) == null)
-            {
-                throw new KeyNotFoundException("Categoria de Despesa inválida. Não encontrada.");
-            }
-
+           if (CategoriaController.ObterPorId(categoriaId) == null)
+             {
+               throw new KeyNotFoundException("Categoria inválida. Não encontrada.");
+               }
             var novaDespesa = new Despesa(utilizador.Id, valor, descricao, categoriaId);
             
           
