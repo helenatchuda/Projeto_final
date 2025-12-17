@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
+
     <title>Gestão de Finanças Pessoal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="./style.css">
-    <script src="./script.js" defer></script>
+    <script src="./script.js?v=6" defer></script>
 </head>
+
 <body>
 
     <div class="dashboard-container">
@@ -32,7 +36,8 @@
             <nav>
                 <ul>
                     <li>
-                        <a id="toggleUserMenu"><i class="fas fa-user-circle"></i> Utilizador <i class="fas fa-caret-down"></i></a>
+                        <a id="toggleUserMenu"><i class="fas fa-user-circle"></i> Utilizador <i
+                                class="fas fa-caret-down"></i></a>
                         <div class="submenu" id="userSubmenu">
                             <a id="loginLink">Login</a>
                             <a id="logoutLink">Logout</a>
@@ -46,12 +51,12 @@
                     <li><a id="relatorioLink"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
                 </ul>
             </nav>
-            
+
         </div>
 
         <div id="main-content" class="main-content">
             <button id="openBtn" class="open-btn">☰ Menu</button>
-            
+
             <section id="page-dashboard" class="page-content active-page">
                 <header class="page-header">
                     <div>
@@ -77,15 +82,8 @@
                         <p id="dashboardDespesas">0.00 €</p>
                     </div>
                 </section>
-                
-                <div class="dashboard-charts">
-                    <div class="chart-placeholder">
-                        Gráfico de Despesas por Categoria (Implementar com Chart.js/etc.)
-                    </div>
-                    <div class="chart-placeholder">
-                        Gráfico de Balanço Mensal
-                    </div>
-                </div>
+
+
 
                 <section class="data-table-container" style="margin-top: 30px;">
                     <h3>Últimas 5 Transações</h3>
@@ -122,9 +120,9 @@
                         <p id="totalDespesasMes">0.00 €</p>
                     </div>
                     <div class="card expense">
-                       <i class="fas fa-list-alt"></i>
-                       <h4>Nº de Transações</h4>
-                         <p id="countDespesasMes">0</p>
+                        <i class="fas fa-list-alt"></i>
+                        <h4>Nº de Transações</h4>
+                        <p id="countDespesasMes">0</p>
                     </div>
                     <div class="card income">
                         <i class="fas fa-chart-line">€</i>
@@ -161,7 +159,7 @@
                         <i class="fas fa-plus"></i> Nova Receita
                     </button>
                 </header>
-                
+
                 <section class="summary-cards">
                     <div class="card total">
                         <i class="fas fa-euro-sign"></i>
@@ -260,15 +258,15 @@
                             <option value="personalizado">Personalizado</option>
                         </select>
                     </div>
-                    
+
                     <div class="filtro-group" id="filtroDataPersonalizada" style="display: none;">
                         <label for="dataInicio">Data Início:</label>
                         <input type="date" id="dataInicio">
-                        
+
                         <label for="dataFim">Data Fim:</label>
                         <input type="date" id="dataFim">
                     </div>
-                    
+
                     <div class="filtro-group">
                         <label for="tipoTransacao">Tipo de Transação:</label>
                         <select id="tipoTransacao">
@@ -277,7 +275,7 @@
                             <option value="despesas">Apenas Despesas</option>
                         </select>
                     </div>
-                    
+
                     <button class="btn-filtrar" id="aplicarFiltros">
                         <i class="fas fa-filter"></i> Aplicar Filtros
                     </button>
@@ -323,20 +321,7 @@
                     </table>
                 </section>
 
-                <div class="graficos-relatorio">
-                    <div class="grafico-container">
-                        <h4>Distribuição por Categoria</h4>
-                        <div class="chart-placeholder" id="graficoCategorias">
-                            Gráfico de pizza por categoria
-                        </div>
-                    </div>
-                    <div class="grafico-container">
-                        <h4>Evolução Mensal</h4>
-                        <div class="chart-placeholder" id="graficoEvolucao">
-                            Gráfico de linha mensal
-                        </div>
-                    </div>
-                </div>
+
 
                 <section class="resumo-categorias">
                     <h3>Resumo por Categoria</h3>
@@ -357,25 +342,14 @@
             <form class="popup__form form" novalidate>
                 <div class="form-group">
                     <label for="loginEmail">Email</label>
-                    <input
-                        type="email"
-                        id="loginEmail"
-                        class="form__input form__input-email"
-                        placeholder="seu@email.com"
-                        required
-                    />
+                    <input type="email" id="loginEmail" class="form__input form__input-email"
+                        placeholder="seu@email.com" required />
                     <span class="form__error" id="loginEmail-error" aria-live="polite"></span>
                 </div>
                 <div class="form-group">
                     <label for="loginPassword">Password</label>
-                    <input
-                        type="password"
-                        id="loginPassword"
-                        class="form__input form__input-password"
-                        placeholder="••••••••"
-                        required
-                        minlength="6"
-                    />
+                    <input type="password" id="loginPassword" class="form__input form__input-password"
+                        placeholder="••••••••" required minlength="6" />
                     <span class="form__error" id="loginPassword-error" aria-live="polite"></span>
                 </div>
                 <button type="submit" class="popup__save-button">
@@ -398,52 +372,26 @@
             <form class="popup__form form" novalidate>
                 <div class="form-group">
                     <label for="registerName">Nome Completo</label>
-                    <input
-                        type="text"
-                        id="registerName"
-                        class="form__input form__input-userName"
-                        placeholder="Seu nome"
-                        required
-                        minlength="2"
-                        maxlength="40"
-                    />
+                    <input type="text" id="registerName" class="form__input form__input-userName" placeholder="Seu nome"
+                        required minlength="2" maxlength="40" />
                     <span class="form__error" id="registerName-error" aria-live="polite"></span>
                 </div>
                 <div class="form-group">
                     <label for="registerEmail">Email</label>
-                    <input
-                        type="email"
-                        id="registerEmail"
-                        class="form__input form__input-email"
-                        placeholder="seu@email.com"
-                        required
-                    />
+                    <input type="email" id="registerEmail" class="form__input form__input-email"
+                        placeholder="seu@email.com" required />
                     <span class="form__error" id="registerEmail-error" aria-live="polite"></span>
                 </div>
                 <div class="form-group">
                     <label for="registerPassword">Password</label>
-                    <input
-                        type="password"
-                        id="registerPassword"
-                        class="form__input form__input-password"
-                        placeholder="••••••••"
-                        required
-                        minlength="6"
-                        maxlength="200"
-                    />
+                    <input type="password" id="registerPassword" class="form__input form__input-password"
+                        placeholder="••••••••" required minlength="6" maxlength="200" />
                     <span class="form__error" id="registerPassword-error" aria-live="polite"></span>
                 </div>
                 <div class="form-group">
                     <label for="registerConfirmPassword">Confirmar Password</label>
-                    <input
-                        type="password"
-                        id="registerConfirmPassword"
-                        class="form__input form__input-password"
-                        placeholder="••••••••"
-                        required
-                        minlength="6"
-                        maxlength="200"
-                    />
+                    <input type="password" id="registerConfirmPassword" class="form__input form__input-password"
+                        placeholder="••••••••" required minlength="6" maxlength="200" />
                     <span class="form__error" id="registerConfirmPassword-error" aria-live="polite"></span>
                 </div>
                 <button type="submit" class="popup__save-button">
@@ -455,7 +403,7 @@
             </form>
         </div>
     </div>
-    
+
     <!-- MODAL DE CATEGORIA -->
     <div id="categoryModal" class="modal-overlay">
         <div class="modal">
@@ -493,17 +441,18 @@
                 <input type="text" id="transactionDescription" required>
                 <label for="transactionValue">Valor (€):</label>
                 <input type="number" id="transactionValue" step="0.01" min="0.01" required>
-                
+
                 <!-- CAMPO DE TEXTO PARA CATEGORIA (não dropdown) -->
                 <label for="transactionCategoryInput">Categoria:</label>
                 <input type="text" id="transactionCategoryInput" placeholder="Digite o nome da categoria" required>
-                
+
                 <button type="submit" id="saveTransactionBtn">Guardar Transação</button>
                 <input type="hidden" id="transactionId">
                 <input type="hidden" id="transactionTypeHidden">
             </form>
         </div>
     </div>
-    
+
 </body>
+
 </html>

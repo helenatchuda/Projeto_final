@@ -664,9 +664,19 @@ body, html {
 /* --- DASHBOARD CHARTS --- */
 .dashboard-charts {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 25px;
     margin: 30px 0;
+}
+
+.chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .chart-placeholder {
