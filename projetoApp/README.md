@@ -1,18 +1,8 @@
-# Criar um projeto POO para Gestão de Finanças Pessoal
+﻿# Projecto de POO para Gestão de Finanças Pessoais
 
-- Começamos por criar os diagramas no plantaUML
-    1º Diagramgra de casos de usos
-    2º Diagramas de classes
-    3º Diagramas de sequência
 
-- Implemantação das classes(codigo fonte)
+Este programa é como o nome indica um gestor de finanças pessoais, onde utilizadores podem criar uma conta com capacidade de guardar dados pessoais, criar categorias de despesas e receitas com seus respetivos dados (valor, data, etc.). Existem também administradores com funções adicionais à do utilizador. As funcionalidades totais desta aplicação são, criação de categorias, mostrar e criar despesas e receitas e o seu total, gerar relatórios, fazer transações e mostrar o seu histórico e mostrar o saldo, além de ter um perfil.
 
-- Desecolvimento das soluções
+Para o usar começa-se por descarregar e depois dentro dele cria-se uma conta e está pronto a ser utilizado.
 
-# As tecnologias usadas
-  - PlantaUML para as diagramas
-  - C# para o codigo fornte e desovolmento de solução
-  - HTML, css e javascript para desevolver a interface
-  - Api para Backend
-  - Swagger para fazer o yamal
-
+Contribuintes: Helena da Silva, Nuno Oliveira, Alexandra Marcelino.
